@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { LogOut, Plus, Save, Trash2 } from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
+import { ChevronDown, ChevronRight, LogOut, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { sfx } from '../lib/sfx';
 import type { AdminParticipant, AdminTeam } from '../types';
+import './AdminDashboard.css';
 
 interface Props {
   onLogout: () => void;
@@ -17,26 +17,23 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [participants, setParticipants] = useState<AdminParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [savingTeamId, setSavingTeamId] = useState<string | null>(null);
-
-  const loadData = async () => {
-    setLoading(true);
-    const [teamsRes, participantsRes] = await Promise.all([
-      supabase.from('teams').select('*').order('name'),
-      supabase.from('participants').select('*').order('row_order'),
-    ]);
-
-    if (teamsRes.error || participantsRes.error) {
-      setError(teamsRes.error?.message || participantsRes.error?.message || 'Failed to load data');
-    } else {
-      setTeams((teamsRes.data as AdminTeam[]) || []);
-      setParticipants((participantsRes.data as AdminParticipant[]) || []);
-    }
-    setLoading(false);
-  };
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    loadData();
+    (async () => {
+      const [teamsRes, participantsRes] = await Promise.all([
+        supabase.from('teams').select('*').order('name'),
+        supabase.from('participants').select('*').order('row_order'),
+      ]);
+
+      if (teamsRes.error || participantsRes.error) {
+        setError(teamsRes.error?.message || participantsRes.error?.message || 'Failed to load data');
+      } else {
+        setTeams((teamsRes.data as AdminTeam[]) || []);
+        setParticipants((participantsRes.data as AdminParticipant[]) || []);
+      }
+      setLoading(false);
+    })();
   }, []);
 
   const handleLogout = async () => {
@@ -44,23 +41,20 @@ export default function AdminDashboard({ onLogout }: Props) {
     onLogout();
   };
 
+  const toggleExpanded = (teamId: string) => {
+    setExpanded(prev => ({ ...prev, [teamId]: !prev[teamId] }));
+  };
+
   const updateTeamField = (teamId: string, field: keyof AdminTeam, value: string) => {
     setTeams(prev => prev.map(t => (t.id === teamId ? { ...t, [field]: value } : t)));
   };
 
   const saveTeam = async (team: AdminTeam) => {
-    setSavingTeamId(team.id);
     const { error: saveError } = await supabase
       .from('teams')
       .update({ name: team.name, game_theme: team.game_theme, status: team.status, pin: team.pin })
       .eq('id', team.id);
-    setSavingTeamId(null);
-    if (saveError) {
-      sfx.playError();
-      setError(saveError.message);
-    } else {
-      sfx.playSuccess();
-    }
+    if (saveError) setError(saveError.message);
   };
 
   const deleteTeam = async (teamId: string) => {
@@ -70,7 +64,6 @@ export default function AdminDashboard({ onLogout }: Props) {
       setError(deleteError.message);
       return;
     }
-    sfx.playError();
     setTeams(prev => prev.filter(t => t.id !== teamId));
     setParticipants(prev => prev.filter(p => p.team_id !== teamId));
   };
@@ -87,7 +80,6 @@ export default function AdminDashboard({ onLogout }: Props) {
       setError(insertError?.message || 'Failed to add team');
       return;
     }
-    sfx.playPowerUp();
     setTeams(prev => [...prev, data as AdminTeam].sort((a, b) => a.name.localeCompare(b.name)));
   };
 
@@ -104,12 +96,7 @@ export default function AdminDashboard({ onLogout }: Props) {
       .from('participants')
       .update({ full_name: p.full_name, is_internal: p.is_internal, role: p.role })
       .eq('id', p.id);
-    if (saveError) {
-      sfx.playError();
-      setError(saveError.message);
-    } else {
-      sfx.playClick();
-    }
+    if (saveError) setError(saveError.message);
   };
 
   const deleteParticipant = async (id: string) => {
@@ -138,124 +125,169 @@ export default function AdminDashboard({ onLogout }: Props) {
   };
 
   if (loading) {
-    return <p className="text-center">Loading teams…</p>;
+    return <div className="admin-dashboard admin-loading">Loading…</div>;
   }
 
   return (
-    <div className="flex flex-col gap-24 scale-up-anim">
-      <div className="flex items-center justify-between">
-        <h2 style={{ color: 'var(--brand)', marginBottom: 0 }}>Host Dashboard</h2>
-        <button id="admin-logout-btn" className="btn btn-ghost btn-sm" onClick={handleLogout}>
-          <LogOut size={16} /> Log out
+    <div className="admin-dashboard">
+      <div className="admin-topbar">
+        <h1>Pub Hunt — Host Dashboard</h1>
+        <button id="admin-logout-btn" className="admin-logout" onClick={handleLogout}>
+          <LogOut size={14} /> Log out
         </button>
       </div>
 
-      {error && (
-        <div className="alert alert-danger">
-          <span>{error}</span>
+      <div className="admin-body">
+        {error && <div className="admin-error">{error}</div>}
+
+        <div className="admin-toolbar">
+          <span className="admin-stats">
+            {teams.length} teams · {participants.length} participants
+          </span>
+          <button id="admin-add-team-btn" className="admin-btn admin-btn-primary" onClick={addTeam}>
+            <Plus size={14} /> Add team
+          </button>
         </div>
-      )}
 
-      <button id="admin-add-team-btn" className="btn btn-secondary btn-block" onClick={addTeam}>
-        <Plus size={16} /> Add Team
-      </button>
-
-      <div className="flex flex-col gap-24" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>
-        {teams.map(team => {
-          const teamParticipants = participants.filter(p => p.team_id === team.id);
-          return (
-            <div key={team.id} className="panel panel-tertiary flex flex-col gap-12">
-              <div className="flex gap-8">
-                <input
-                  className="game-input"
-                  style={{ flex: 2 }}
-                  value={team.name}
-                  onChange={e => updateTeamField(team.id, 'name', e.target.value)}
-                />
-                <input
-                  className="game-input"
-                  style={{ flex: 1 }}
-                  value={team.game_theme}
-                  onChange={e => updateTeamField(team.id, 'game_theme', e.target.value)}
-                />
-              </div>
-              <div className="flex gap-8">
-                <select
-                  className="game-select"
-                  style={{ flex: 1 }}
-                  value={team.status}
-                  onChange={e => updateTeamField(team.id, 'status', e.target.value)}
-                >
-                  <option value="confirmed">Confirmed</option>
-                  <option value="tbc">TBC</option>
-                  <option value="withdrawn">Withdrawn</option>
-                </select>
-                <input
-                  className="game-input"
-                  style={{ flex: 1 }}
-                  value={team.pin}
-                  onChange={e => updateTeamField(team.id, 'pin', e.target.value)}
-                  placeholder="PIN"
-                />
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => saveTeam(team)}
-                  disabled={savingTeamId === team.id}
-                >
-                  <Save size={14} />
-                </button>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteTeam(team.id)}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-
-              <hr className="divider" />
-
-              <div className="flex flex-col gap-8">
-                {teamParticipants.map(p => (
-                  <div key={p.id} className="flex gap-8 items-center">
-                    <input
-                      className="game-input"
-                      style={{ flex: 2 }}
-                      value={p.full_name}
-                      onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
-                      onBlur={() => saveParticipant(p)}
-                    />
-                    <select
-                      className="game-select"
-                      style={{ flex: 1 }}
-                      value={p.role}
-                      onChange={e => {
-                        updateParticipantField(p.id, 'role', e.target.value);
-                        saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
-                      }}
-                    >
-                      <option value="captain">Captain</option>
-                      <option value="participant">Participant</option>
-                    </select>
-                    <label className="flex items-center gap-8" style={{ fontSize: 13 }}>
-                      <input
-                        type="checkbox"
-                        checked={p.is_internal}
-                        onChange={e => {
-                          updateParticipantField(p.id, 'is_internal', e.target.checked);
-                          saveParticipant({ ...p, is_internal: e.target.checked });
-                        }}
-                      />
-                      Internal
-                    </label>
-                    <button className="btn btn-danger btn-xs" onClick={() => deleteParticipant(p.id)}>
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                ))}
-                <button className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => addParticipant(team.id)}>
-                  <Plus size={14} /> Add Member
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th style={{ width: 24 }}></th>
+                <th>Team</th>
+                <th>Theme</th>
+                <th>Status</th>
+                <th>PIN</th>
+                <th style={{ width: 70 }}>Members</th>
+                <th style={{ width: 70 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {teams.map(team => {
+                const teamParticipants = participants.filter(p => p.team_id === team.id);
+                const isExpanded = !!expanded[team.id];
+                return (
+                  <Fragment key={team.id}>
+                    <tr>
+                      <td>
+                        <button className="admin-expand-btn" onClick={() => toggleExpanded(team.id)} aria-label="Toggle members">
+                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        </button>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={team.name}
+                          onChange={e => updateTeamField(team.id, 'name', e.target.value)}
+                          onBlur={() => saveTeam(team)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={team.game_theme}
+                          onChange={e => updateTeamField(team.id, 'game_theme', e.target.value)}
+                          onBlur={() => saveTeam(team)}
+                        />
+                      </td>
+                      <td>
+                        <select
+                          className="admin-select"
+                          value={team.status}
+                          onChange={e => {
+                            updateTeamField(team.id, 'status', e.target.value);
+                            saveTeam({ ...team, status: e.target.value });
+                          }}
+                        >
+                          <option value="confirmed">Confirmed</option>
+                          <option value="tbc">TBC</option>
+                          <option value="withdrawn">Withdrawn</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="admin-pin-input"
+                          value={team.pin}
+                          onChange={e => updateTeamField(team.id, 'pin', e.target.value)}
+                          onBlur={() => saveTeam(team)}
+                        />
+                      </td>
+                      <td>{teamParticipants.length}</td>
+                      <td>
+                        <div className="admin-row-actions">
+                          <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteTeam(team.id)} aria-label="Delete team">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className="admin-participants-row">
+                        <td colSpan={7}>
+                          <table className="admin-participants-table">
+                            <tbody>
+                              {teamParticipants.map(p => (
+                                <tr key={p.id}>
+                                  <td style={{ width: '40%' }}>
+                                    <input
+                                      type="text"
+                                      value={p.full_name}
+                                      onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
+                                      onBlur={() => saveParticipant(p)}
+                                    />
+                                  </td>
+                                  <td style={{ width: 120 }}>
+                                    <select
+                                      className="admin-select"
+                                      value={p.role}
+                                      onChange={e => {
+                                        updateParticipantField(p.id, 'role', e.target.value);
+                                        saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
+                                      }}
+                                    >
+                                      <option value="captain">Captain</option>
+                                      <option value="participant">Participant</option>
+                                    </select>
+                                  </td>
+                                  <td style={{ width: 90 }}>
+                                    <label className="admin-internal-checkbox">
+                                      <input
+                                        type="checkbox"
+                                        checked={p.is_internal}
+                                        onChange={e => {
+                                          updateParticipantField(p.id, 'is_internal', e.target.checked);
+                                          saveParticipant({ ...p, is_internal: e.target.checked });
+                                        }}
+                                      />
+                                      Internal
+                                    </label>
+                                  </td>
+                                  <td style={{ width: 36, textAlign: 'right' }}>
+                                    <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteParticipant(p.id)} aria-label="Delete member">
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                              <tr className="admin-add-member-row">
+                                <td colSpan={4}>
+                                  <button className="admin-link-btn" onClick={() => addParticipant(team.id)}>
+                                    <Plus size={12} /> Add member
+                                  </button>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

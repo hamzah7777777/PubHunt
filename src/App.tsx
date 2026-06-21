@@ -47,6 +47,10 @@ export default function App() {
     setView('landing');
   };
 
+  if (view === 'admin-dashboard' && adminAuthed) {
+    return <AdminDashboard onLogout={handleAdminLogout} />;
+  }
+
   return (
     <div className="phone-wrapper slide-up-anim">
       <header className="game-header">
@@ -92,7 +96,7 @@ export default function App() {
                   setView(adminAuthed ? 'admin-dashboard' : 'admin-login');
                 }}
               >
-                <Shield size={18} /> Host / Admin
+                <Shield size={18} /> Host
               </button>
             </div>
           )}
@@ -107,10 +111,6 @@ export default function App() {
 
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
-          )}
-
-          {view === 'admin-dashboard' && adminAuthed && (
-            <AdminDashboard onLogout={handleAdminLogout} />
           )}
         </div>
       </main>

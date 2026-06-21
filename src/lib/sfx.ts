@@ -5,29 +5,12 @@ class SoundFX {
 
   private initCtx() {
     if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      this.ctx = new AudioCtx();
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
-  }
-
-  playCoin() {
-    if (this.muted) return;
-    this.initCtx();
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    const now = this.ctx.currentTime;
-    osc.frequency.setValueAtTime(988, now);
-    osc.frequency.setValueAtTime(1976, now + 0.08);
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.4);
   }
 
   playPowerUp() {
@@ -50,26 +33,6 @@ class SoundFX {
     gain.connect(this.ctx.destination);
     osc.start(now);
     osc.stop(now + 0.7);
-  }
-
-  playSuccess() {
-    if (this.muted) return;
-    this.initCtx();
-    if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    const now = this.ctx.currentTime;
-    osc.frequency.setValueAtTime(523.25, now);
-    osc.frequency.setValueAtTime(659.25, now + 0.06);
-    osc.frequency.setValueAtTime(783.99, now + 0.12);
-    osc.frequency.setValueAtTime(1046.50, now + 0.18);
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.55);
   }
 
   playError() {

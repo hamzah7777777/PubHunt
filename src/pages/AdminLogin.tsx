@@ -25,7 +25,7 @@ export default function AdminLogin({ onLogin, onBack }: Props) {
     if (rpcError || !isValid) {
       setLoading(false);
       sfx.playError();
-      setError('Incorrect passphrase.');
+      setError('You Shall not Pass!');
       return;
     }
 

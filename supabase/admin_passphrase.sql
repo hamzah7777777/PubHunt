@@ -22,9 +22,10 @@ alter table app_config enable row level security;
 -- No policies = no anon/authenticated access at all. Only SECURITY DEFINER
 -- functions (which bypass RLS) and the SQL editor (as postgres) can touch it.
 
--- Admin passphrase: Mellon
+-- Set the admin passphrase by running this with your own value in the
+-- Supabase SQL editor — do not commit a real passphrase to this file.
 insert into app_config (key, value)
-values ('admin_passphrase_hash', crypt('Mellon', gen_salt('bf')))
+values ('admin_passphrase_hash', crypt('REPLACE_WITH_YOUR_PASSPHRASE', gen_salt('bf')))
 on conflict (key) do update set value = excluded.value;
 
 create or replace function verify_admin_passphrase(p_passphrase text)
