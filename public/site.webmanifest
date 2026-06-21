@@ -1,0 +1,12 @@
+{
+  "name": "Sheffield Pub Hunt 2026",
+  "short_name": "Pub Hunt",
+  "description": "A retro pixel arcade pub crawl game for Sheffield.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C0B14",
+  "theme_color": "#5B2EFF",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}
