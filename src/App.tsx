@@ -71,7 +71,7 @@ export default function App() {
             <div className="flex flex-col gap-24 scale-up-anim">
               <div className="panel panel-dark text-center" style={{ padding: '32px 24px', boxShadow: 'var(--shadow-card-ring)' }}>
                 <span className="kicker kicker-white">Sheffield 2026</span>
-                <h1 style={{ color: 'var(--color-white)', fontSize: 44, marginBottom: 8 }}>🍻 PUB HUNT</h1>
+                <h1 style={{ color: 'var(--color-white)', fontSize: 44, marginBottom: 8 }}>PUB HUNT</h1>
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18 }}>
                   Video games themed charity pub crawl, Sheffield city centre.
                 </p>
