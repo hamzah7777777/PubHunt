@@ -1,1 +1,7 @@
-/* Cleared default App.css. All styles are integrated inside index.css */
+/* App-level reset — global styles live in index.css */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
