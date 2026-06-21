@@ -158,11 +158,12 @@ p {
    page itself (no internal phone-style scrollbar), not a tiny phone frame
    floating in empty space. */
 @media (min-width: 600px) {
-  body {
+  body { background: var(--neutral-primary); }
+
+  .page-frame {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    background: var(--neutral-primary);
     padding: 48px 16px;
   }
 
@@ -538,3 +539,26 @@ p {
 .gap-12 { gap: 12px; }
 .gap-24 { gap: 24px; }
 .text-center { text-align: center; }
+
+/* ----------------------------------------------------------
+   SITE FOOTER — always rendered (outside #root, not behind JS)
+   so non-JS crawlers see real identifying content.
+   ---------------------------------------------------------- */
+.site-footer {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-body-subtle);
+  text-align: center;
+}
+.site-footer p { font-size: inherit; color: inherit; margin-bottom: 10px; }
+.site-footer p:last-child { margin-bottom: 0; }
+.site-footer strong { color: var(--color-body); }
+.site-footer a { color: var(--fg-purple); }
+
+@media (min-width: 600px) {
+  .site-footer { max-width: 720px; }
+}

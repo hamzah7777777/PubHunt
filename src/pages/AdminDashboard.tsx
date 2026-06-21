@@ -131,7 +131,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   return (
     <div className="admin-dashboard">
       <div className="admin-topbar">
-        <h1>Pub Hunt — Host Dashboard</h1>
+        <h1>Host Dashboard</h1>
         <button id="admin-logout-btn" className="admin-logout" onClick={handleLogout}>
           <LogOut size={14} /> Log out
         </button>
@@ -149,144 +149,112 @@ export default function AdminDashboard({ onLogout }: Props) {
           </button>
         </div>
 
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th style={{ width: 24 }}></th>
-                <th>Team</th>
-                <th>Theme</th>
-                <th>Status</th>
-                <th>PIN</th>
-                <th style={{ width: 70 }}>Members</th>
-                <th style={{ width: 70 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map(team => {
-                const teamParticipants = participants.filter(p => p.team_id === team.id);
-                const isExpanded = !!expanded[team.id];
-                return (
-                  <Fragment key={team.id}>
-                    <tr>
-                      <td>
-                        <button className="admin-expand-btn" onClick={() => toggleExpanded(team.id)} aria-label="Toggle members">
-                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        </button>
-                      </td>
-                      <td>
+        <div className="admin-team-list">
+          {teams.map(team => {
+            const teamParticipants = participants.filter(p => p.team_id === team.id);
+            const isExpanded = !!expanded[team.id];
+            return (
+              <Fragment key={team.id}>
+                <div className="admin-team-card">
+                  <button className="admin-expand-btn" onClick={() => toggleExpanded(team.id)} aria-label="Toggle members">
+                    {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                  </button>
+
+                  <input
+                    className="admin-field admin-field-name"
+                    type="text"
+                    value={team.name}
+                    onChange={e => updateTeamField(team.id, 'name', e.target.value)}
+                    onBlur={() => saveTeam(team)}
+                  />
+
+                  <button className="admin-btn admin-btn-icon admin-btn-danger admin-field-delete" onClick={() => deleteTeam(team.id)} aria-label="Delete team">
+                    <Trash2 size={15} />
+                  </button>
+
+                  <input
+                    className="admin-field admin-field-theme"
+                    type="text"
+                    placeholder="Theme"
+                    value={team.game_theme}
+                    onChange={e => updateTeamField(team.id, 'game_theme', e.target.value)}
+                    onBlur={() => saveTeam(team)}
+                  />
+
+                  <select
+                    className="admin-select admin-field-status"
+                    value={team.status}
+                    onChange={e => {
+                      updateTeamField(team.id, 'status', e.target.value);
+                      saveTeam({ ...team, status: e.target.value });
+                    }}
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="tbc">TBC</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+
+                  <input
+                    className="admin-field admin-field-pin"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="PIN"
+                    value={team.pin}
+                    onChange={e => updateTeamField(team.id, 'pin', e.target.value)}
+                    onBlur={() => saveTeam(team)}
+                  />
+
+                  <span className="admin-field-members">{teamParticipants.length} member{teamParticipants.length === 1 ? '' : 's'}</span>
+                </div>
+
+                {isExpanded && (
+                  <div className="admin-participant-list">
+                    {teamParticipants.map(p => (
+                      <div key={p.id} className="admin-participant-row">
                         <input
+                          className="admin-field admin-participant-name"
                           type="text"
-                          value={team.name}
-                          onChange={e => updateTeamField(team.id, 'name', e.target.value)}
-                          onBlur={() => saveTeam(team)}
+                          value={p.full_name}
+                          onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
+                          onBlur={() => saveParticipant(p)}
                         />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={team.game_theme}
-                          onChange={e => updateTeamField(team.id, 'game_theme', e.target.value)}
-                          onBlur={() => saveTeam(team)}
-                        />
-                      </td>
-                      <td>
-                        <select
-                          className="admin-select"
-                          value={team.status}
-                          onChange={e => {
-                            updateTeamField(team.id, 'status', e.target.value);
-                            saveTeam({ ...team, status: e.target.value });
-                          }}
-                        >
-                          <option value="confirmed">Confirmed</option>
-                          <option value="tbc">TBC</option>
-                          <option value="withdrawn">Withdrawn</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="admin-pin-input"
-                          value={team.pin}
-                          onChange={e => updateTeamField(team.id, 'pin', e.target.value)}
-                          onBlur={() => saveTeam(team)}
-                        />
-                      </td>
-                      <td>{teamParticipants.length}</td>
-                      <td>
-                        <div className="admin-row-actions">
-                          <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteTeam(team.id)} aria-label="Delete team">
-                            <Trash2 size={14} />
+                        <div className="admin-participant-meta">
+                          <select
+                            className="admin-select"
+                            value={p.role}
+                            onChange={e => {
+                              updateParticipantField(p.id, 'role', e.target.value);
+                              saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
+                            }}
+                          >
+                            <option value="captain">Captain</option>
+                            <option value="participant">Participant</option>
+                          </select>
+                          <label className="admin-internal-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={p.is_internal}
+                              onChange={e => {
+                                updateParticipantField(p.id, 'is_internal', e.target.checked);
+                                saveParticipant({ ...p, is_internal: e.target.checked });
+                              }}
+                            />
+                            Internal
+                          </label>
+                          <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteParticipant(p.id)} aria-label="Delete member">
+                            <Trash2 size={13} />
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                    {isExpanded && (
-                      <tr className="admin-participants-row">
-                        <td colSpan={7}>
-                          <table className="admin-participants-table">
-                            <tbody>
-                              {teamParticipants.map(p => (
-                                <tr key={p.id}>
-                                  <td style={{ width: '40%' }}>
-                                    <input
-                                      type="text"
-                                      value={p.full_name}
-                                      onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
-                                      onBlur={() => saveParticipant(p)}
-                                    />
-                                  </td>
-                                  <td style={{ width: 120 }}>
-                                    <select
-                                      className="admin-select"
-                                      value={p.role}
-                                      onChange={e => {
-                                        updateParticipantField(p.id, 'role', e.target.value);
-                                        saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
-                                      }}
-                                    >
-                                      <option value="captain">Captain</option>
-                                      <option value="participant">Participant</option>
-                                    </select>
-                                  </td>
-                                  <td style={{ width: 90 }}>
-                                    <label className="admin-internal-checkbox">
-                                      <input
-                                        type="checkbox"
-                                        checked={p.is_internal}
-                                        onChange={e => {
-                                          updateParticipantField(p.id, 'is_internal', e.target.checked);
-                                          saveParticipant({ ...p, is_internal: e.target.checked });
-                                        }}
-                                      />
-                                      Internal
-                                    </label>
-                                  </td>
-                                  <td style={{ width: 36, textAlign: 'right' }}>
-                                    <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteParticipant(p.id)} aria-label="Delete member">
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                              <tr className="admin-add-member-row">
-                                <td colSpan={4}>
-                                  <button className="admin-link-btn" onClick={() => addParticipant(team.id)}>
-                                    <Plus size={12} /> Add member
-                                  </button>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+                      </div>
+                    ))}
+                    <button className="admin-link-btn" onClick={() => addParticipant(team.id)}>
+                      <Plus size={13} /> Add member
+                    </button>
+                  </div>
+                )}
+              </Fragment>
+            );
+          })}
         </div>
       </div>
     </div>

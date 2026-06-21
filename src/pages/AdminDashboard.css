@@ -4,7 +4,7 @@
   background: #f4f5f7;
   color: #1a1a1a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .admin-dashboard h1,
@@ -12,8 +12,7 @@
 .admin-dashboard h3,
 .admin-dashboard button,
 .admin-dashboard input,
-.admin-dashboard select,
-.admin-dashboard table {
+.admin-dashboard select {
   font-family: inherit;
   margin: 0;
 }
@@ -22,13 +21,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 14px 16px;
   background: #1a1a1a;
   color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .admin-topbar h1 {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   margin: 0;
 }
@@ -40,23 +42,26 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #fff;
-  border-radius: 4px;
-  padding: 6px 10px;
+  border-radius: 6px;
+  padding: 8px 12px;
   font-size: 13px;
+  min-height: 40px;
   cursor: pointer;
 }
 .admin-logout:hover { background: rgba(255, 255, 255, 0.1); }
 
 .admin-body {
-  max-width: 1100px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 16px 20px 40px;
+  padding: 12px 12px 40px;
 }
 
 .admin-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -68,12 +73,14 @@
 .admin-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   border: 1px solid #d0d3d8;
   background: #fff;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  min-height: 40px;
   cursor: pointer;
   color: #1a1a1a;
 }
@@ -87,8 +94,8 @@
 .admin-btn-primary:hover { background: #333; }
 
 .admin-btn-icon {
-  padding: 4px 6px;
-  border-radius: 3px;
+  padding: 8px;
+  min-width: 40px;
 }
 
 .admin-btn-danger {
@@ -101,132 +108,136 @@
   background: #fdecea;
   color: #c0291c;
   border: 1px solid #e3b6b0;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border-radius: 6px;
+  padding: 10px 12px;
   margin-bottom: 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
-.admin-table-wrap {
+/* ----------------------------------------------------------
+   TEAM LIST — mobile-first cards. Each team is a CSS grid with
+   named areas so the same markup can reflow into a denser single
+   row at wider widths without duplicating JSX.
+   ---------------------------------------------------------- */
+.admin-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-team-card {
   background: #fff;
   border: 1px solid #e1e3e7;
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "expand name   delete"
+    ".      theme  theme"
+    ".      status status"
+    ".      pin     members";
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.admin-field,
+.admin-select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d0d3d8;
   border-radius: 6px;
-  overflow: hidden;
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.admin-table th {
-  text-align: left;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #6b6f76;
-  background: #fafbfc;
   padding: 8px 10px;
-  border-bottom: 1px solid #e1e3e7;
-}
-
-.admin-table td {
-  padding: 6px 10px;
-  border-bottom: 1px solid #eef0f2;
-  vertical-align: middle;
-}
-
-.admin-table tr:last-child td { border-bottom: none; }
-
-.admin-table input[type='text'],
-.admin-table input:not([type]) {
-  width: 100%;
-  border: 1px solid transparent;
-  background: transparent;
-  padding: 4px 6px;
-  border-radius: 3px;
-  font-size: 13px;
+  font-size: 16px; /* 16px stops iOS Safari auto-zoom on focus */
   color: #1a1a1a;
+  background: #fff;
 }
-.admin-table input[type='text']:hover,
-.admin-table input:not([type]):hover {
-  border-color: #d0d3d8;
-}
-.admin-table input[type='text']:focus,
-.admin-table input:not([type]):focus {
+.admin-field:focus,
+.admin-select:focus {
   outline: none;
   border-color: #1a1a1a;
-  background: #fff;
 }
 
-.admin-pin-input { width: 64px; font-family: monospace; }
-
-.admin-select {
-  border: 1px solid #d0d3d8;
-  border-radius: 3px;
-  padding: 4px 6px;
+.admin-field-name { grid-area: name; font-weight: 600; }
+.admin-field-theme { grid-area: theme; }
+.admin-field-status { grid-area: status; }
+.admin-field-pin { grid-area: pin; font-family: monospace; }
+.admin-field-members {
+  grid-area: members;
+  text-align: right;
   font-size: 13px;
-  background: #fff;
-  color: #1a1a1a;
+  color: #6b6f76;
 }
+.admin-field-delete { grid-area: delete; }
 
 .admin-expand-btn {
+  grid-area: expand;
   background: transparent;
   border: none;
   cursor: pointer;
   color: #6b6f76;
   display: flex;
   align-items: center;
-  padding: 2px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 }
 
-.admin-row-actions {
-  display: flex;
-  gap: 4px;
-  justify-content: flex-end;
-}
-
-.admin-participants-row td {
+/* ----------------------------------------------------------
+   PARTICIPANTS — shown when a team card is expanded.
+   ---------------------------------------------------------- */
+.admin-participant-list {
   background: #fafbfc;
-  padding: 0;
+  border: 1px solid #e1e3e7;
+  border-radius: 8px;
+  padding: 10px;
+  margin: -2px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.admin-participants-table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-participant-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.admin-participants-table td {
-  padding: 4px 10px 4px 36px;
-  font-size: 13px;
-  border-bottom: 1px solid #eef0f2;
+.admin-participant-name { font-size: 16px; }
+
+.admin-participant-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
-.admin-participants-table tr:last-child td { border-bottom: none; }
+.admin-participant-meta .admin-select { width: auto; flex: 1 1 130px; }
 
 .admin-internal-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 13px;
   color: #555;
   white-space: nowrap;
+  min-height: 40px;
 }
+.admin-internal-checkbox input { width: 18px; height: 18px; }
 
-.admin-add-member-row td {
-  padding: 6px 10px 6px 36px;
-}
+.admin-participant-meta .admin-btn-icon { margin-left: auto; }
 
 .admin-link-btn {
   background: transparent;
   border: none;
   color: #1a1a1a;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 0;
+  gap: 6px;
+  padding: 8px 4px;
+  align-self: flex-start;
 }
 .admin-link-btn:hover { text-decoration: underline; }
 
@@ -234,4 +245,25 @@
   padding: 40px;
   text-align: center;
   color: #6b6f76;
+}
+
+/* ----------------------------------------------------------
+   DESKTOP — reflow each team card into one dense row once
+   there's enough width for it.
+   ---------------------------------------------------------- */
+@media (min-width: 720px) {
+  .admin-team-card {
+    grid-template-columns: auto 2fr 1fr 130px 90px 90px auto;
+    grid-template-areas: "expand name theme status pin members delete";
+  }
+
+  .admin-field-members { text-align: left; }
+
+  .admin-participant-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .admin-participant-name { flex: 1; }
+  .admin-participant-meta { flex-wrap: nowrap; }
 }
