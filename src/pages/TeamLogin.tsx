@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import { FALLBACK_COVER, getCoverMap } from '../lib/covers';
 import type { TeamSession } from '../types';
 
 interface TeamOption {
@@ -17,35 +18,58 @@ interface Props {
 
 export default function TeamLogin({ onLogin, onBack }: Props) {
   const [teams, setTeams] = useState<TeamOption[]>([]);
-  const [teamName, setTeamName] = useState('');
+  const [coverMap, setCoverMap] = useState<Map<string, string>>(new Map());
+  const [loadingTeams, setLoadingTeams] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState<TeamOption | null>(null);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingTeams, setLoadingTeams] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from('teams')
-      .select('id,name,game_theme')
-      .order('name')
-      .then(({ data, error: fetchError }) => {
-        if (fetchError) {
-          setError('Could not load team list. Please try again later.');
-        } else if (data) {
-          setTeams(data as TeamOption[]);
-        }
-        setLoadingTeams(false);
-      });
+    Promise.all([
+      supabase.from('teams').select('id,name,game_theme').order('name'),
+      getCoverMap(),
+    ]).then(([teamsRes, covers]) => {
+      if (teamsRes.error) {
+        setError('Could not load team list. Please try again later.');
+      } else if (teamsRes.data) {
+        setTeams(teamsRes.data as TeamOption[]);
+      }
+      setCoverMap(covers);
+      setLoadingTeams(false);
+    });
   }, []);
+
+  const coverFor = (theme: string) => coverMap.get(theme.trim().toLowerCase()) ?? FALLBACK_COVER;
+
+  const filteredTeams = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return teams;
+    return teams.filter(t => t.name.toLowerCase().includes(q) || t.game_theme.toLowerCase().includes(q));
+  }, [teams, search]);
+
+  const selectTeam = (team: TeamOption) => {
+    sfx.playClick();
+    setSelectedTeam(team);
+    setPin('');
+    setError('');
+  };
+
+  const backToGrid = () => {
+    setSelectedTeam(null);
+    setPin('');
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamName || !pin.trim()) return;
+    if (!selectedTeam || !pin.trim()) return;
     setLoading(true);
     setError('');
 
     const { data, error: rpcError } = await supabase.rpc('verify_team_pin', {
-      p_team_name: teamName,
+      p_team_name: selectedTeam.name,
       p_pin: pin.trim(),
     });
 
@@ -53,7 +77,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
 
     if (rpcError || !data || data.length === 0) {
       sfx.playError();
-      setError('Incorrect PIN, or team not found. Check with your captain.');
+      setError('Incorrect PIN. Check with your captain.');
       return;
     }
 
@@ -68,32 +92,18 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
     });
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-24 scale-up-anim">
-      <button type="button" id="team-login-back-btn" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
-        <ArrowLeft size={16} /> Back
-      </button>
+  if (selectedTeam) {
+    return (
+      <form onSubmit={handleSubmit} className="flex flex-col gap-24 scale-up-anim">
+        <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={backToGrid}>
+          <ArrowLeft size={16} /> Choose a different cover
+        </button>
 
-      <div className="panel panel-secondary">
-        <span className="kicker">Team Portal</span>
-        <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>Find Your Team</h2>
+        <div className="panel panel-secondary text-center cover-reveal">
+          <img src={coverFor(selectedTeam.game_theme)} alt={selectedTeam.game_theme} className="cover-reveal-img" />
+          <span className="kicker" style={{ marginTop: 16 }}>{selectedTeam.game_theme}</span>
+          <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>{selectedTeam.name}</h2>
 
-        <label className="game-label" htmlFor="team-select">Team Name</label>
-        <select
-          id="team-select"
-          className="game-select"
-          value={teamName}
-          onChange={e => setTeamName(e.target.value)}
-          disabled={loadingTeams}
-          required
-        >
-          <option value="">{loadingTeams ? 'Loading teams…' : 'Select your team…'}</option>
-          {teams.map(t => (
-            <option key={t.id} value={t.name}>{t.name} — {t.game_theme}</option>
-          ))}
-        </select>
-
-        <div style={{ marginTop: 16 }}>
           <label className="game-label" htmlFor="team-pin">Team PIN</label>
           <input
             id="team-pin"
@@ -103,9 +113,44 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
             placeholder="4-digit PIN from your captain"
             value={pin}
             onChange={e => setPin(e.target.value)}
+            autoFocus
             required
           />
         </div>
+
+        {error && (
+          <div className="alert alert-danger">
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button id="team-login-submit-btn" type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
+          {loading ? 'Checking…' : 'Enter Team Portal'}
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-24 scale-up-anim">
+      <button type="button" id="team-login-back-btn" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
+        <ArrowLeft size={16} /> Back
+      </button>
+
+      <div>
+        <span className="kicker">Team Portal</span>
+        <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>Find Your Team</h2>
+      </div>
+
+      <div className="cover-search">
+        <Search size={16} />
+        <input
+          type="text"
+          className="game-input"
+          placeholder="Search by team name…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
       {error && (
@@ -114,9 +159,20 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
         </div>
       )}
 
-      <button id="team-login-submit-btn" type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
-        {loading ? 'Checking…' : 'Enter Team Portal'}
-      </button>
-    </form>
+      {loadingTeams ? (
+        <p style={{ color: 'var(--color-body-subtle)' }}>Loading teams…</p>
+      ) : (
+        <div className="cover-grid">
+          {filteredTeams.map(t => (
+            <button key={t.id} type="button" className="cover-tile" onClick={() => selectTeam(t)} aria-label={`Select team themed ${t.game_theme}`}>
+              <img src={coverFor(t.game_theme)} alt={t.game_theme} loading="lazy" />
+            </button>
+          ))}
+          {filteredTeams.length === 0 && (
+            <p style={{ color: 'var(--color-body-subtle)' }}>No teams match "{search}".</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

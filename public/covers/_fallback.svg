@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <rect width="300" height="400" fill="#1A1430"/>
+  <rect x="4" y="4" width="292" height="392" fill="none" stroke="#F5F3FF" stroke-width="4"/>
+  <text x="150" y="190" font-family="monospace" font-size="64" fill="#F5F3FF" text-anchor="middle">?</text>
+  <text x="150" y="240" font-family="monospace" font-size="16" fill="#8B86AD" text-anchor="middle">MYSTERY GAME</text>
+</svg>

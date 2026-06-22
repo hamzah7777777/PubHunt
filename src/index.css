@@ -495,6 +495,60 @@ p {
 }
 
 /* ----------------------------------------------------------
+   GAME COVER GRID — "find your team" picker
+   ---------------------------------------------------------- */
+.cover-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-body-subtle);
+}
+.cover-search .game-input { flex: 1; }
+
+.cover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .cover-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.cover-tile {
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-base);
+  background: var(--neutral-primary-medium);
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 0 #000000;
+  transition: transform 80ms steps(2);
+}
+.cover-tile:hover,
+.cover-tile:active { transform: translate(2px, 2px); }
+.cover-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cover-reveal-img {
+  width: 160px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 2px solid var(--border-default);
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+/* ----------------------------------------------------------
    SELECT ELEMENT
    ---------------------------------------------------------- */
 .game-select {
