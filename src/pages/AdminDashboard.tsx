@@ -210,9 +210,9 @@ export default function AdminDashboard({ onLogout }: Props) {
                 {isExpanded && (
                   <div className="admin-participant-list">
                     <div className="admin-costume-photo">
-                      {team.costume_photo_url ? (
-                        <a href={team.costume_photo_url} target="_blank" rel="noreferrer">
-                          <img src={team.costume_photo_url} alt={`${team.name} costume`} className="admin-costume-thumb" />
+                      {team.team_photo_url ? (
+                        <a href={team.team_photo_url} target="_blank" rel="noreferrer">
+                          <img src={team.team_photo_url} alt={`${team.name} team photo`} className="admin-costume-thumb" />
                         </a>
                       ) : (
                         <span className="admin-costume-empty">No costume photo uploaded yet</span>

@@ -23,7 +23,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
   const captain = session.participants.find(p => p.role === 'captain');
   const members = session.participants.filter(p => p.role !== 'captain');
 
-  const [photoUrl, setPhotoUrl] = useState(session.costume_photo_url);
+  const [photoUrl, setPhotoUrl] = useState(session.team_photo_url);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadLabel, setUploadLabel] = useState('');
@@ -35,6 +35,8 @@ export default function TeamPortal({ session, onLogout }: Props) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+
+    console.log('[Photo Upload] File selected:', { name: file.name, size: file.size, type: file.type });
 
     if (!file.type.startsWith('image/')) {
       setPhotoError('Please choose an image file.');
@@ -67,7 +69,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
       setUploadProgress(p => (p < 92 ? p + 2 : p));
     }, 150);
 
-    const path = `${session.team_id}/costume.jpg`;
+    const path = `${session.team_id}/team.jpg`;
     const { error: uploadError } = await supabase.storage
       .from('team-photos')
       .upload(path, compressed, { upsert: true, contentType: 'image/jpeg' });
@@ -77,9 +79,12 @@ export default function TeamPortal({ session, onLogout }: Props) {
     if (uploadError) {
       setUploading(false);
       sfx.playError();
+      console.error('[Photo Upload] Storage upload failed:', uploadError);
       setPhotoError('Upload failed. Please try again.');
       return;
     }
+
+    console.log('[Photo Upload] Storage upload successful');
 
     const { data: publicUrlData } = supabase.storage.from('team-photos').getPublicUrl(path);
     const newUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
@@ -92,6 +97,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
     if (rpcError) {
       setUploading(false);
       sfx.playError();
+      console.error('[Photo Upload] RPC call failed:', rpcError);
       setPhotoError('Could not save photo. Please try again.');
       return;
     }

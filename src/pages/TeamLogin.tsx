@@ -88,7 +88,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
       team_name: row.team_name,
       game_theme: row.game_theme,
       status: row.status,
-      costume_photo_url: row.costume_photo_url,
+      team_photo_url: row.team_photo_url,
       participants: row.participants,
     });
   };
