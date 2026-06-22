@@ -13,7 +13,7 @@ create table if not exists teams (
   game_theme text not null default 'TBC',
   pin text not null,
   status text not null default 'confirmed' check (status in ('confirmed', 'tbc', 'withdrawn')),
-  costume_photo_url text,
+  team_photo_url text,
   created_at timestamptz not null default now()
 );
 
@@ -30,7 +30,21 @@ create table if not exists participants (
 create index if not exists participants_team_id_idx on participants(team_id);
 
 -- Safe to re-run against an existing database that predates this column.
-alter table teams add column if not exists costume_photo_url text;
+-- Renames the original column name (costume_photo_url) if it's still
+-- around, so already-uploaded photos aren't lost by the rename.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'teams' and column_name = 'costume_photo_url'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_name = 'teams' and column_name = 'team_photo_url'
+  ) then
+    alter table teams rename column costume_photo_url to team_photo_url;
+  end if;
+end $$;
+alter table teams add column if not exists team_photo_url text;
 
 -- ============================================================
 -- ROW LEVEL SECURITY
@@ -87,7 +101,7 @@ returns table (
   team_name text,
   game_theme text,
   status text,
-  costume_photo_url text,
+  team_photo_url text,
   participants json
 )
 language plpgsql
@@ -101,7 +115,7 @@ begin
     t.name,
     t.game_theme,
     t.status,
-    t.costume_photo_url,
+    t.team_photo_url,
     coalesce(
       json_agg(
         json_build_object(
@@ -118,36 +132,37 @@ begin
   left join participants p on p.team_id = t.id
   where t.name = p_team_name
     and t.pin = p_pin
-  group by t.id, t.name, t.game_theme, t.status, t.costume_photo_url;
+  group by t.id, t.name, t.game_theme, t.status, t.team_photo_url;
 end;
 $$;
 
 grant execute on function verify_team_pin(text, text) to anon;
 
 -- ============================================================
--- COSTUME PHOTO UPLOAD
+-- TEAM PHOTO UPLOAD
 -- ============================================================
 -- Teams aren't authenticated via Supabase Auth (just PIN-gated through the
 -- RPC above), so there's no JWT to scope a storage policy to. We treat the
 -- team_id (a UUID handed back only after a successful PIN check) the same
 -- way the rest of this app treats a logged-in session: knowledge of it is
 -- the bearer credential. This RPC lets the anon key update only the
--- costume_photo_url column, nothing else, for a given team id.
+-- team_photo_url column, nothing else, for a given team id.
 
-create or replace function set_team_costume_photo(p_team_id uuid, p_photo_url text)
+drop function if exists set_team_costume_photo(uuid, text);
+create or replace function set_team_photo(p_team_id uuid, p_photo_url text)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 begin
-  update teams set costume_photo_url = p_photo_url where id = p_team_id;
+  update teams set team_photo_url = p_photo_url where id = p_team_id;
 end;
 $$;
 
-grant execute on function set_team_costume_photo(uuid, text) to anon;
+grant execute on function set_team_photo(uuid, text) to anon;
 
--- Storage bucket for team costume photos. Public read (so the uploaded
+-- Storage bucket for team photos. Public read (so the uploaded
 -- image URL can be displayed directly), uploads/overwrites via the anon key
 -- since there's no Supabase Auth session for teams.
 insert into storage.buckets (id, name, public)
