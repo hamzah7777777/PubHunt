@@ -29,6 +29,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
   const [uploadLabel, setUploadLabel] = useState('');
   const [photoError, setPhotoError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,7 +84,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
     const { data: publicUrlData } = supabase.storage.from('team-photos').getPublicUrl(path);
     const newUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
 
-    const { error: rpcError } = await supabase.rpc('set_team_costume_photo', {
+    const { error: rpcError } = await supabase.rpc('set_team_photo', {
       p_team_id: session.team_id,
       p_photo_url: newUrl,
     });
@@ -117,28 +118,16 @@ export default function TeamPortal({ session, onLogout }: Props) {
         </div>
       </div>
 
-      {captain && (
-        <div className="panel panel-tertiary">
-          <span className="kicker">Team Captain</span>
-          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
-            <h3 style={{ marginBottom: 0 }}>{captain.full_name}</h3>
-            <span className={`badge ${captain.is_internal ? 'badge-success' : 'badge-brand'}`}>
-              {captain.is_internal ? 'Internal' : 'External'}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div className="panel text-center">
         <div className="flex items-center gap-8" style={{ marginBottom: 16 }}>
           <Camera size={20} style={{ color: 'var(--brand)' }} />
-          <h3 style={{ marginBottom: 0 }}>Costume Photo</h3>
+          <h3 style={{ marginBottom: 0 }}>Team Photo</h3>
         </div>
 
         {photoUrl && (
           <img
             src={photoUrl}
-            alt={`${session.team_name} in costume`}
+            alt={`${session.team_name} team photo`}
             style={{ width: '100%', maxWidth: 320, borderRadius: 'var(--radius-base)', border: '2px solid var(--border-default)', marginBottom: 16 }}
           />
         )}
@@ -167,16 +156,47 @@ export default function TeamPortal({ session, onLogout }: Props) {
           style={{ display: 'none' }}
           onChange={handlePhotoSelect}
         />
-        <button
-          type="button"
-          id="team-portal-upload-photo-btn"
-          className="btn btn-primary"
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Camera size={16} /> {uploading ? 'Working…' : photoUrl ? 'Replace Photo' : 'Upload Costume Photo'}
-        </button>
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handlePhotoSelect}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button
+            type="button"
+            id="team-portal-camera-photo-btn"
+            className="btn btn-secondary"
+            disabled={uploading}
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <Camera size={16} /> Take Photo
+          </button>
+          <button
+            type="button"
+            id="team-portal-upload-photo-btn"
+            className="btn btn-primary"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Camera size={16} /> {uploading ? 'Working…' : photoUrl ? 'Replace Photo' : 'Upload Team Photo'}
+          </button>
+        </div>
       </div>
+
+      {captain && (
+        <div className="panel panel-tertiary">
+          <span className="kicker">Team Captain</span>
+          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+            <h3 style={{ marginBottom: 0 }}>{captain.full_name}</h3>
+            <span className={`badge ${captain.is_internal ? 'badge-success' : 'badge-brand'}`}>
+              {captain.is_internal ? 'Internal' : 'External'}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="panel">
         <div className="flex items-center gap-8" style={{ marginBottom: 16 }}>
