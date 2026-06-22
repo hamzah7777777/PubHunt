@@ -8,6 +8,7 @@ import type { TeamSession } from '../types';
 interface Props {
   session: TeamSession;
   onLogout: () => void;
+  onStartGame: () => void;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -19,15 +20,17 @@ const STATUS_LABEL: Record<string, string> = {
 const MAX_INPUT_BYTES = 20 * 1024 * 1024;
 const TARGET_PHOTO_BYTES = 2 * 1024 * 1024;
 
-export default function TeamPortal({ session, onLogout }: Props) {
+export default function TeamPortal({ session, onLogout, onStartGame }: Props) {
   const captain = session.participants.find(p => p.role === 'captain');
   const members = session.participants.filter(p => p.role !== 'captain');
+  const totalMembers = members.length + (captain ? 1 : 0);
 
   const [photoUrl, setPhotoUrl] = useState(session.team_photo_url);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadLabel, setUploadLabel] = useState('');
   const [photoError, setPhotoError] = useState('');
+  const [showInstructions, setShowInstructions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,15 +174,17 @@ export default function TeamPortal({ session, onLogout }: Props) {
           onChange={handlePhotoSelect}
         />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button
-            type="button"
-            id="team-portal-camera-photo-btn"
-            className="btn btn-secondary"
-            disabled={uploading}
-            onClick={() => cameraInputRef.current?.click()}
-          >
-            <Camera size={16} /> Take Photo
-          </button>
+          {!photoUrl && (
+            <button
+              type="button"
+              id="team-portal-camera-photo-btn"
+              className="btn btn-secondary"
+              disabled={uploading}
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              <Camera size={16} /> Take Photo
+            </button>
+          )}
           <button
             type="button"
             id="team-portal-upload-photo-btn"
@@ -192,25 +197,24 @@ export default function TeamPortal({ session, onLogout }: Props) {
         </div>
       </div>
 
-      {captain && (
-        <div className="panel panel-tertiary">
-          <span className="kicker">Team Captain</span>
-          <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
-            <h3 style={{ marginBottom: 0 }}>{captain.full_name}</h3>
-            <span className={`badge ${captain.is_internal ? 'badge-success' : 'badge-brand'}`}>
-              {captain.is_internal ? 'Internal' : 'External'}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div className="panel">
         <div className="flex items-center gap-8" style={{ marginBottom: 16 }}>
           <Users size={20} style={{ color: 'var(--brand)' }} />
-          <h3 style={{ marginBottom: 0 }}>Team Members ({members.length})</h3>
+          <h3 style={{ marginBottom: 0 }}>Team Members ({totalMembers})</h3>
         </div>
 
         <div className="flex flex-col gap-12">
+          {captain && (
+            <div className="flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: 8 }}>
+              <span>{captain.full_name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span className="badge badge-warning">Captain</span>
+                <span className={`badge ${captain.is_internal ? 'badge-success' : 'badge-brand'}`} style={{ marginLeft: 8 }}>
+                  {captain.is_internal ? 'Internal' : 'External'}
+                </span>
+              </div>
+            </div>
+          )}
           {members.map(m => (
             <div key={m.id} className="flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: 8 }}>
               <span>{m.full_name}</span>
@@ -224,6 +228,50 @@ export default function TeamPortal({ session, onLogout }: Props) {
           )}
         </div>
       </div>
+
+      <div className="panel panel-secondary">
+        <button
+          type="button"
+          className="btn btn-outline"
+          style={{ width: '100%' }}
+          onClick={() => setShowInstructions(prev => !prev)}
+        >
+          Instructions
+        </button>
+
+        {showInstructions && (
+          <div style={{ marginTop: 16, textAlign: 'left' }}>
+            <h3 style={{ marginBottom: 12 }}>Instructions (Please read carefully if this is your first time!)</h3>
+            <ol style={{ paddingLeft: 20, margin: 0, lineHeight: 1.75 }}>
+              <li>Follow the clues to visit each pub in order, and then head to the final venue (wristbands needed)</li>
+              <li>Complete the en-route challenges</li>
+              <li>Answer Questions about the starting venue and each pub you visit</li>
+              <li>Complete the video game quiz (Five Rounds), including finding out the names of all the other teams and writing them next to the correct picture.</li>
+              <li>Remember to EAT along the way.</li>
+              <li>Enjoy yourself (within reason)</li>
+              <li>You'll visit three pubs in total, then the final venue where there will be a disco and you can hand in your quiz</li>
+              <li>We have private hire of the venue from 10pm and access is with a pubhunt wristband only.</li>
+            </ol>
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="btn btn-primary btn-block btn-lg"
+        style={{
+          background: '#44b649',
+          borderColor: '#2f7f31',
+          color: '#f6fffb',
+          minHeight: 60,
+          fontSize: 20,
+          fontWeight: 700,
+          marginBottom: 20,
+        }}
+        onClick={onStartGame}
+      >
+        START GAME
+      </button>
 
       <div className="panel panel-secondary flex items-center gap-12">
         <Award size={20} style={{ color: 'var(--brand)', flexShrink: 0 }} />

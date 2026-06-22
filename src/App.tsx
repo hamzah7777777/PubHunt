@@ -5,10 +5,18 @@ import TeamLogin from './pages/TeamLogin';
 import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import PubHint1 from './pages/pub hints/PubHint1';
+import PubHint2 from './pages/pub hints/PubHint2';
+import PubHint3 from './pages/pub hints/PubHint3';
+import PubHint4 from './pages/pub hints/PubHint4';
+import PubHint5 from './pages/pub hints/PubHint5';
+import PubHint6 from './pages/pub hints/PubHint6';
+import PubHint7 from './pages/pub hints/PubHint7';
+import PubHint8 from './pages/pub hints/PubHint8';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'pub-hint-1' | 'pub-hint-2' | 'pub-hint-3' | 'pub-hint-4' | 'pub-hint-5' | 'pub-hint-6' | 'pub-hint-7' | 'pub-hint-8';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -106,8 +114,17 @@ export default function App() {
           )}
 
           {view === 'team-portal' && teamSession && (
-            <TeamPortal session={teamSession} onLogout={handleTeamLogout} />
+            <TeamPortal session={teamSession} onLogout={handleTeamLogout} onStartGame={() => setView('pub-hint-1')} />
           )}
+
+          {view === 'pub-hint-1' && <PubHint1 onNext={() => setView('pub-hint-2')} />}
+          {view === 'pub-hint-2' && <PubHint2 onNext={() => setView('pub-hint-3')} />}
+          {view === 'pub-hint-3' && <PubHint3 onNext={() => setView('pub-hint-4')} />}
+          {view === 'pub-hint-4' && <PubHint4 onNext={() => setView('pub-hint-5')} />}
+          {view === 'pub-hint-5' && <PubHint5 onNext={() => setView('pub-hint-6')} />}
+          {view === 'pub-hint-6' && <PubHint6 onNext={() => setView('pub-hint-7')} />}
+          {view === 'pub-hint-7' && <PubHint7 onNext={() => setView('pub-hint-8')} />}
+          {view === 'pub-hint-8' && <PubHint8 onNext={() => setView('team-portal')} />}
 
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
