@@ -13,6 +13,7 @@ create table if not exists teams (
   game_theme text not null default 'TBC',
   pin text not null,
   status text not null default 'confirmed' check (status in ('confirmed', 'tbc', 'withdrawn')),
+  costume_photo_url text,
   created_at timestamptz not null default now()
 );
 
@@ -28,6 +29,9 @@ create table if not exists participants (
 
 create index if not exists participants_team_id_idx on participants(team_id);
 
+-- Safe to re-run against an existing database that predates this column.
+alter table teams add column if not exists costume_photo_url text;
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
@@ -40,12 +44,14 @@ create index if not exists participants_team_id_idx on participants(team_id);
 alter table teams enable row level security;
 alter table participants enable row level security;
 
+drop policy if exists "admins full access to teams" on teams;
 create policy "admins full access to teams"
   on teams for all
   to authenticated
   using (true)
   with check (true);
 
+drop policy if exists "admins full access to participants" on participants;
 create policy "admins full access to participants"
   on participants for all
   to authenticated
@@ -54,6 +60,7 @@ create policy "admins full access to participants"
 
 -- Public list of team names only (no PINs), so the team login screen can
 -- show a dropdown without exposing anything sensitive.
+drop policy if exists "anon can list team names" on teams;
 create policy "anon can list team names"
   on teams for select
   to anon
@@ -73,12 +80,14 @@ grant select (id, name, game_theme) on teams to anon;
 -- matches. Runs as SECURITY DEFINER so it can read the `pin` column despite
 -- the anon grant above not including it.
 
+drop function if exists verify_team_pin(text, text);
 create or replace function verify_team_pin(p_team_name text, p_pin text)
 returns table (
   team_id uuid,
   team_name text,
   game_theme text,
   status text,
+  costume_photo_url text,
   participants json
 )
 language plpgsql
@@ -92,6 +101,7 @@ begin
     t.name,
     t.game_theme,
     t.status,
+    t.costume_photo_url,
     coalesce(
       json_agg(
         json_build_object(
@@ -108,8 +118,56 @@ begin
   left join participants p on p.team_id = t.id
   where t.name = p_team_name
     and t.pin = p_pin
-  group by t.id, t.name, t.game_theme, t.status;
+  group by t.id, t.name, t.game_theme, t.status, t.costume_photo_url;
 end;
 $$;
 
 grant execute on function verify_team_pin(text, text) to anon;
+
+-- ============================================================
+-- COSTUME PHOTO UPLOAD
+-- ============================================================
+-- Teams aren't authenticated via Supabase Auth (just PIN-gated through the
+-- RPC above), so there's no JWT to scope a storage policy to. We treat the
+-- team_id (a UUID handed back only after a successful PIN check) the same
+-- way the rest of this app treats a logged-in session: knowledge of it is
+-- the bearer credential. This RPC lets the anon key update only the
+-- costume_photo_url column, nothing else, for a given team id.
+
+create or replace function set_team_costume_photo(p_team_id uuid, p_photo_url text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update teams set costume_photo_url = p_photo_url where id = p_team_id;
+end;
+$$;
+
+grant execute on function set_team_costume_photo(uuid, text) to anon;
+
+-- Storage bucket for team costume photos. Public read (so the uploaded
+-- image URL can be displayed directly), uploads/overwrites via the anon key
+-- since there's no Supabase Auth session for teams.
+insert into storage.buckets (id, name, public)
+values ('team-photos', 'team-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "anon can upload team photos" on storage.objects;
+create policy "anon can upload team photos"
+  on storage.objects for insert
+  to anon
+  with check (bucket_id = 'team-photos');
+
+drop policy if exists "anon can overwrite team photos" on storage.objects;
+create policy "anon can overwrite team photos"
+  on storage.objects for update
+  to anon
+  using (bucket_id = 'team-photos');
+
+drop policy if exists "anyone can view team photos" on storage.objects;
+create policy "anyone can view team photos"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'team-photos');

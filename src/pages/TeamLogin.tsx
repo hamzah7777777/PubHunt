@@ -88,6 +88,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
       team_name: row.team_name,
       game_theme: row.game_theme,
       status: row.status,
+      costume_photo_url: row.costume_photo_url,
       participants: row.participants,
     });
   };
@@ -166,6 +167,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
           {filteredTeams.map(t => (
             <button key={t.id} type="button" className="cover-tile" onClick={() => selectTeam(t)} aria-label={`Select team themed ${t.game_theme}`}>
               <img src={coverFor(t.game_theme)} alt={t.game_theme} loading="lazy" />
+              <span className="cover-tile-name">{t.name}</span>
             </button>
           ))}
           {filteredTeams.length === 0 && (
