@@ -4,6 +4,7 @@ import logo from './Pub Hint 8 Assets/Logo.png';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 function StoneButton({ label, primary, onClick }: { label: string; primary?: boolean; onClick?: () => void }) {
@@ -32,7 +33,7 @@ function StoneButton({ label, primary, onClick }: { label: string; primary?: boo
   );
 }
 
-export default function PubHint8({ onNext }: Props) {
+export default function PubHint8({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', position: 'relative', overflow: 'hidden', fontFamily: "'Silkscreen', monospace" }}>
@@ -60,6 +61,7 @@ export default function PubHint8({ onNext }: Props) {
 
       {/* menu buttons */}
       <div style={{ position: 'absolute', left: '8%', right: '8%', top: '70%', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {onBack && <StoneButton label="Previous Pub Hint" onClick={onBack} />}
         <StoneButton label="Next Pub Hint" primary onClick={onNext} />
         <div style={{ display: 'flex', gap: 7 }}>
           <div style={{ flex: 1 }}><StoneButton label="Options..." /></div>

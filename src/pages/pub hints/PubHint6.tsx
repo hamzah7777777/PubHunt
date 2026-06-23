@@ -2,6 +2,7 @@ import HintFrame from './HintFrame';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 function HudCorner({ rotate }: { rotate: number }) {
@@ -22,7 +23,7 @@ const dogTag = (
   </svg>
 );
 
-export default function PubHint6({ onNext }: Props) {
+export default function PubHint6({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Bebas Neue', Arial, sans-serif", background: '#0a0a0a', color: '#e8e8e8', position: 'relative' }}>
@@ -66,12 +67,30 @@ export default function PubHint6({ onNext }: Props) {
         </div>
       </div>
 
-      <div style={{ padding: '22px 16px 24px' }}>
+      <div style={{ padding: '22px 16px 24px', display: 'flex', gap: 10 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '15px 16px',
+              fontFamily: "'Bebas Neue', Arial, sans-serif",
+              fontSize: 16,
+              letterSpacing: '0.1em',
+              color: '#ff6a00',
+              background: 'transparent',
+              border: '2px solid #ff6a00',
+              cursor: 'pointer',
+            }}
+          >
+            BACK
+          </button>
+        )}
         <button
           type="button"
           onClick={onNext}
           style={{
-            width: '100%',
+            flex: 1,
             padding: '15px 0',
             fontFamily: "'Bebas Neue', Arial, sans-serif",
             fontSize: 18,

@@ -134,6 +134,7 @@ export default function App() {
           {view === 'team-portal' && teamSession && activeTab === 'hints' && (
             <HintComponent
               onNext={() => (hintIndex < HINT_PAGES.length ? setHintIndex(hintIndex + 1) : setActiveTab('team'))}
+              onBack={hintIndex > 1 ? () => setHintIndex(hintIndex - 1) : undefined}
             />
           )}
 

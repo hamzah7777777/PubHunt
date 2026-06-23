@@ -2,6 +2,7 @@ import HintFrame from './HintFrame';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const pokeball = (
@@ -14,7 +15,7 @@ const pokeball = (
   </span>
 );
 
-export default function PubHint3({ onNext }: Props) {
+export default function PubHint3({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Silkscreen', monospace", background: '#6b6fc9', padding: '14px 14px 0' }}>
@@ -66,12 +67,30 @@ export default function PubHint3({ onNext }: Props) {
         </div>
       </div>
 
-      <div style={{ padding: '20px 14px 24px' }}>
+      <div style={{ padding: '20px 14px 24px', display: 'flex', gap: 10 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '16px 14px',
+              fontFamily: "'Silkscreen', monospace",
+              fontSize: 12,
+              color: '#1a1a1a',
+              background: '#f8f8d8',
+              border: '3px solid #1a1a1a',
+              cursor: 'pointer',
+              boxShadow: '4px 4px 0 0 #1a1a1a',
+            }}
+          >
+            BACK
+          </button>
+        )}
         <button
           type="button"
           onClick={onNext}
           style={{
-            width: '100%',
+            flex: 1,
             padding: '16px 0',
             fontFamily: "'Silkscreen', monospace",
             fontSize: 12,

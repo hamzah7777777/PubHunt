@@ -2,6 +2,7 @@ import HintFrame from './HintFrame';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const goldText = {
@@ -114,7 +115,7 @@ function MetalBar({ label, primary, onClick }: { label: string; primary?: boolea
   );
 }
 
-export default function PubHint5({ onNext }: Props) {
+export default function PubHint5({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{
@@ -161,6 +162,7 @@ export default function PubHint5({ onNext }: Props) {
 
         {/* metal menu bars */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '26px 15% 0' }}>
+          {onBack && <MetalBar label="Previous Pub Hint" onClick={onBack} />}
           <MetalBar label="Next Pub Hint" primary onClick={onNext} />
           <MetalBar label="Options" />
           <MetalBar label="Quit" />

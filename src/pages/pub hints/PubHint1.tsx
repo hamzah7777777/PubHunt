@@ -2,6 +2,7 @@ import HintFrame from './HintFrame';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const hexagon = (
@@ -22,7 +23,7 @@ const hamburger = (
   </div>
 );
 
-export default function PubHint1({ onNext }: Props) {
+export default function PubHint1({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Roboto', Arial, sans-serif", background: '#ffffff', color: '#1a1a1a', imageRendering: 'auto' }}>
@@ -56,22 +57,41 @@ export default function PubHint1({ onNext }: Props) {
           Think premium city rooftop spaces with a clean, appointed interior.
         </p>
 
-        <button
-          type="button"
-          onClick={onNext}
-          style={{
-            marginTop: 16,
-            padding: '14px 26px',
-            fontSize: 14,
-            fontWeight: 700,
-            color: '#fff',
-            background: '#db0011',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          Next Pub Hint
-        </button>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                padding: '14px 18px',
+                fontSize: 14,
+                fontWeight: 700,
+                color: '#db0011',
+                background: '#fff',
+                border: '2px solid #db0011',
+                cursor: 'pointer',
+              }}
+            >
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onNext}
+            style={{
+              flex: 1,
+              padding: '14px 26px',
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#fff',
+              background: '#db0011',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Next Pub Hint
+          </button>
+        </div>
 
         {/* Premier section + floating chat bubble, kept as page chrome for authenticity */}
         <div style={{ marginTop: 26, borderTop: '1px solid #ececec', paddingTop: 18, paddingBottom: 18, position: 'relative' }}>

@@ -5,9 +5,10 @@ import bannerLogo from './Pub Hint 7 Assets/bannerLogo_AmongUs.png';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
-export default function PubHint7({ onNext }: Props) {
+export default function PubHint7({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{
@@ -48,12 +49,31 @@ export default function PubHint7({ onNext }: Props) {
         </div>
       </div>
 
-      <div style={{ position: 'relative', padding: '24px 18px 24px' }}>
+      <div style={{ position: 'relative', padding: '24px 18px 24px', display: 'flex', gap: 10 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '15px 18px',
+              fontFamily: "'Trebuchet MS', Verdana, sans-serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#99d25a',
+              background: 'transparent',
+              border: '2px solid #99d25a',
+              borderRadius: 18,
+              cursor: 'pointer',
+            }}
+          >
+            Back
+          </button>
+        )}
         <button
           type="button"
           onClick={onNext}
           style={{
-            width: '100%',
+            flex: 1,
             padding: '15px 0',
             fontFamily: "'Trebuchet MS', Verdana, sans-serif",
             fontSize: 16,

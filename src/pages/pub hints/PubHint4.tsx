@@ -2,6 +2,7 @@ import HintFrame from './HintFrame';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const plumbob = (
@@ -17,7 +18,7 @@ const motives = [
   { label: 'Fun', value: 92 },
 ];
 
-export default function PubHint4({ onNext }: Props) {
+export default function PubHint4({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Comfortaa', sans-serif", background: '#eaf6ff' }}>
@@ -74,12 +75,30 @@ export default function PubHint4({ onNext }: Props) {
         </div>
       </div>
 
-      <div style={{ padding: '20px 16px 24px' }}>
+      <div style={{ padding: '20px 16px 24px', display: 'flex', gap: 10 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '16px 18px',
+              fontFamily: "'Comfortaa', sans-serif",
+              fontSize: 15,
+              fontWeight: 700,
+              color: '#3ecf3e',
+              background: '#fff',
+              border: '2px solid #3ecf3e',
+              cursor: 'pointer',
+            }}
+          >
+            Back
+          </button>
+        )}
         <button
           type="button"
           onClick={onNext}
           style={{
-            width: '100%',
+            flex: 1,
             padding: '16px 0',
             fontFamily: "'Comfortaa', sans-serif",
             fontSize: 15,

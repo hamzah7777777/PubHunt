@@ -16,11 +16,12 @@ import coin from './Pub Hint 2 Assets/Coin.png';
 
 interface Props {
   onNext: () => void;
+  onBack?: () => void;
 }
 
 const pixelImg: CSSProperties = { imageRendering: 'pixelated', display: 'block' };
 
-export default function PubHint2({ onNext }: Props) {
+export default function PubHint2({ onNext, onBack }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Press Start 2P', monospace", background: '#5c94fc' }}>
@@ -102,12 +103,30 @@ export default function PubHint2({ onNext }: Props) {
         </div>
       </div>
 
-      <div style={{ padding: '18px 14px 24px', background: '#7d4400' }}>
+      <div style={{ padding: '18px 14px 24px', background: '#7d4400', display: 'flex', gap: 10 }}>
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '16px 14px',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 13,
+              color: '#fff',
+              background: '#5c94fc',
+              border: '3px solid #000',
+              cursor: 'pointer',
+              boxShadow: '4px 4px 0 0 #000',
+            }}
+          >
+            BACK
+          </button>
+        )}
         <button
           type="button"
           onClick={onNext}
           style={{
-            width: '100%',
+            flex: 1,
             padding: '16px 0',
             fontFamily: "'Press Start 2P', monospace",
             fontSize: 13,
