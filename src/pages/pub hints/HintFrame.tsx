@@ -3,7 +3,6 @@ import type { CSSProperties, ReactNode } from 'react';
 const frameStyle: CSSProperties = {
   width: '100%',
   maxWidth: 420,
-  aspectRatio: '4 / 5',
   margin: '0 auto',
   overflowX: 'hidden',
   borderRadius: 0,
