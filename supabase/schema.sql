@@ -164,7 +164,11 @@ grant execute on function set_team_photo(uuid, text) to anon;
 
 -- Storage bucket for team photos. Public read (so the uploaded
 -- image URL can be displayed directly), uploads/overwrites via the anon key
--- since there's no Supabase Auth session for teams.
+-- since there's no Supabase Auth session for teams. Also grant the
+-- authenticated role: admins get an anonymous Supabase Auth session on
+-- login (see verify_admin_passphrase / signInAnonymously), which persists
+-- in the browser and causes the same browser to send authenticated
+-- requests for everything afterwards -- including team photo uploads.
 insert into storage.buckets (id, name, public)
 values ('team-photos', 'team-photos', true)
 on conflict (id) do nothing;
@@ -172,13 +176,13 @@ on conflict (id) do nothing;
 drop policy if exists "anon can upload team photos" on storage.objects;
 create policy "anon can upload team photos"
   on storage.objects for insert
-  to anon
+  to anon, authenticated
   with check (bucket_id = 'team-photos');
 
 drop policy if exists "anon can overwrite team photos" on storage.objects;
 create policy "anon can overwrite team photos"
   on storage.objects for update
-  to anon
+  to anon, authenticated
   using (bucket_id = 'team-photos');
 
 drop policy if exists "anyone can view team photos" on storage.objects;
