@@ -489,6 +489,66 @@ p {
 .panel-dark p { color: rgba(255,255,255,0.85); }
 
 /* ----------------------------------------------------------
+   FEED — pixel chat-bubble message cards
+   ---------------------------------------------------------- */
+.feed-msg {
+  position: relative;
+  max-width: 82%;
+  padding-bottom: 10px;
+}
+
+.feed-bubble {
+  background: var(--neutral-primary-medium);
+  border: 3px solid var(--border-default);
+  box-shadow: var(--shadow-card-ring);
+  overflow: hidden;
+}
+
+.feed-bubble-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 3px solid var(--border-default);
+  background: var(--neutral-primary-strong);
+}
+
+.feed-bubble-head strong {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--color-heading);
+  text-transform: uppercase;
+}
+
+.feed-bubble-head span {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-body-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-bubble img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.feed-bubble-tail {
+  position: absolute;
+  left: 18px;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 10px solid var(--border-default);
+}
+
+/* ----------------------------------------------------------
    STATUS BADGES / ALERTS
    ---------------------------------------------------------- */
 .badge {

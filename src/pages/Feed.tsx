@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Camera, Gamepad2, Rss } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { FALLBACK_COVER, getCoverMap } from '../lib/covers';
 
 interface TeamFeedEntry {
   team_id: string;
@@ -18,21 +17,17 @@ function sortByRecent(entries: TeamFeedEntry[]): TeamFeedEntry[] {
 
 export default function Feed() {
   const [entries, setEntries] = useState<TeamFeedEntry[]>([]);
-  const [coverMap, setCoverMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      supabase
-        .from('team_photos')
-        .select('team_id, name, game_theme, status, team_photo_url, updated_at')
-        .neq('status', 'withdrawn'),
-      getCoverMap(),
-    ]).then(([res, covers]) => {
-      if (res.data) setEntries(sortByRecent(res.data as TeamFeedEntry[]));
-      setCoverMap(covers);
-      setLoading(false);
-    });
+    supabase
+      .from('team_photos')
+      .select('team_id, name, game_theme, status, team_photo_url, updated_at')
+      .neq('status', 'withdrawn')
+      .then(res => {
+        if (res.data) setEntries(sortByRecent(res.data as TeamFeedEntry[]));
+        setLoading(false);
+      });
 
     const channel = supabase
       .channel('team-feed')
@@ -56,50 +51,36 @@ export default function Feed() {
     };
   }, []);
 
-  const coverFor = (theme: string) => coverMap.get(theme.trim().toLowerCase()) ?? FALLBACK_COVER;
+  const withPhotos = entries.filter(e => e.team_photo_url);
 
   if (loading) {
     return <p style={{ color: 'var(--color-body-subtle)', textAlign: 'center' }}>Loading feed…</p>;
   }
 
-  if (entries.length === 0) {
+  if (withPhotos.length === 0) {
     return (
       <div className="panel panel-secondary text-center scale-up-anim" style={{ padding: '48px 24px' }}>
-        <Rss size={32} style={{ color: 'var(--brand)', marginBottom: 16 }} />
-        <h3>No teams yet</h3>
+        <MessageSquare size={32} style={{ color: 'var(--brand)', marginBottom: 16 }} />
+        <h3>No photos yet</h3>
         <p style={{ color: 'var(--color-body-subtle)', marginBottom: 0 }}>
-          Team photos will show up here as soon as they're uploaded.
+          Team photos will pop up here the moment they're uploaded.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-16 scale-up-anim">
-      {entries.map(entry => (
-        <div key={entry.team_id} className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ position: 'relative', aspectRatio: '4 / 3', background: 'var(--neutral-primary-medium)' }}>
-            <img
-              src={entry.team_photo_url || coverFor(entry.game_theme)}
-              alt={entry.team_photo_url ? `${entry.name} team photo` : entry.game_theme}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-            {!entry.team_photo_url && (
-              <span
-                className="badge"
-                style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(12,11,20,0.85)' }}
-              >
-                <Camera size={12} /> No photo yet
-              </span>
-            )}
-          </div>
-          <div style={{ padding: 16 }}>
-            <h3 style={{ marginBottom: 6 }}>{entry.name}</h3>
-            <div className="flex items-center gap-8" style={{ color: 'var(--color-body-subtle)', fontSize: 15 }}>
-              <Gamepad2 size={16} />
+    <div className="flex flex-col gap-20 scale-up-anim">
+      {withPhotos.map(entry => (
+        <div key={entry.team_id} className="feed-msg">
+          <div className="feed-bubble">
+            <div className="feed-bubble-head">
+              <strong>{entry.name}</strong>
               <span>{entry.game_theme}</span>
             </div>
+            <img src={entry.team_photo_url!} alt={`${entry.name} team photo`} />
           </div>
+          <span className="feed-bubble-tail" />
         </div>
       ))}
     </div>
