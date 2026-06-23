@@ -190,3 +190,76 @@ create policy "anyone can view team photos"
   on storage.objects for select
   to public
   using (bucket_id = 'team-photos');
+
+-- ============================================================
+-- LIVE TEAM FEED
+-- ============================================================
+-- A narrow, pin-free mirror of `teams` that every team's app can read and
+-- subscribe to over Realtime. We don't put `teams` itself on a Realtime
+-- publication because Realtime streams full row payloads straight off the
+-- WAL, bypassing the column-level grant that hides `pin` from anon below —
+-- this table physically has no pin column, so there's nothing to leak.
+
+create table if not exists team_photos (
+  team_id uuid primary key references teams(id) on delete cascade,
+  name text not null,
+  game_theme text not null,
+  status text not null,
+  team_photo_url text,
+  updated_at timestamptz not null default now()
+);
+
+alter table team_photos enable row level security;
+
+drop policy if exists "anyone can read the team feed" on team_photos;
+create policy "anyone can read the team feed"
+  on team_photos for select
+  to anon, authenticated
+  using (true);
+
+grant select on team_photos to anon, authenticated;
+
+create or replace function sync_team_photos()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into team_photos (team_id, name, game_theme, status, team_photo_url, updated_at)
+  values (new.id, new.name, new.game_theme, new.status, new.team_photo_url, now())
+  on conflict (team_id) do update set
+    name = excluded.name,
+    game_theme = excluded.game_theme,
+    status = excluded.status,
+    team_photo_url = excluded.team_photo_url,
+    updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists teams_sync_team_photos on teams;
+create trigger teams_sync_team_photos
+  after insert or update on teams
+  for each row execute function sync_team_photos();
+
+-- Backfill any teams that already existed before this table did.
+insert into team_photos (team_id, name, game_theme, status, team_photo_url)
+select id, name, game_theme, status, team_photo_url from teams
+on conflict (team_id) do update set
+  name = excluded.name,
+  game_theme = excluded.game_theme,
+  status = excluded.status,
+  team_photo_url = excluded.team_photo_url;
+
+-- Stream inserts/updates to every subscribed client. Guarded so re-running
+-- this script against a project that already has it doesn't error.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'team_photos'
+  ) then
+    alter publication supabase_realtime add table team_photos;
+  end if;
+end $$;
