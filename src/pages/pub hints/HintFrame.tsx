@@ -5,7 +5,6 @@ const frameStyle: CSSProperties = {
   maxWidth: 420,
   height: '100%',
   margin: '0 auto',
-  overflowX: 'hidden',
   borderRadius: 0,
   boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
 };
