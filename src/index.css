@@ -411,6 +411,54 @@ p {
   gap: 28px;
 }
 
+.game-content.has-bottom-nav {
+  padding-bottom: 96px;
+}
+
+/* ----------------------------------------------------------
+   BOTTOM TAB NAV — fixed to the viewport, mirrors the phone
+   shell's width breakpoints so it stays aligned to the frame.
+   ---------------------------------------------------------- */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  background: var(--neutral-primary-soft);
+  border-top: 2px solid var(--border-default);
+  z-index: 20;
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .bottom-nav { max-width: 540px; }
+}
+
+@media (min-width: 900px) {
+  .bottom-nav { max-width: 720px; }
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-body-subtle);
+}
+
+.bottom-nav-btn.active {
+  color: var(--brand);
+}
+
 /* ----------------------------------------------------------
    PANELS — flat colour block, hard border + offset shadow
    ---------------------------------------------------------- */

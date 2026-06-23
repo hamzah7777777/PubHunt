@@ -5,6 +5,8 @@ import TeamLogin from './pages/TeamLogin';
 import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import Feed from './pages/Feed';
+import BottomNav, { type AppTab } from './components/BottomNav';
 import PubHint1 from './pages/pub hints/PubHint1';
 import PubHint2 from './pages/pub hints/PubHint2';
 import PubHint3 from './pages/pub hints/PubHint3';
@@ -16,7 +18,9 @@ import PubHint8 from './pages/pub hints/PubHint8';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'pub-hint-1' | 'pub-hint-2' | 'pub-hint-3' | 'pub-hint-4' | 'pub-hint-5' | 'pub-hint-6' | 'pub-hint-7' | 'pub-hint-8';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard';
+
+const HINT_PAGES = [PubHint1, PubHint2, PubHint3, PubHint4, PubHint5, PubHint6, PubHint7, PubHint8];
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -26,6 +30,8 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [adminAuthed, setAdminAuthed] = useState(false);
+  const [activeTab, setActiveTab] = useState<AppTab>('team');
+  const [hintIndex, setHintIndex] = useState(1);
 
   const toggleMute = () => {
     const next = !muted;
@@ -36,12 +42,16 @@ export default function App() {
   const handleTeamLogin = (session: TeamSession) => {
     setTeamSession(session);
     sessionStorage.setItem('pubhunt_team_session', JSON.stringify(session));
+    setActiveTab('team');
+    setHintIndex(1);
     setView('team-portal');
   };
 
   const handleTeamLogout = () => {
     setTeamSession(null);
     sessionStorage.removeItem('pubhunt_team_session');
+    setActiveTab('team');
+    setHintIndex(1);
     setView('landing');
   };
 
@@ -59,7 +69,11 @@ export default function App() {
     return <AdminDashboard onLogout={handleAdminLogout} />;
   }
 
+  const showBottomNav = view === 'team-portal' && !!teamSession;
+  const HintComponent = HINT_PAGES[hintIndex - 1];
+
   return (
+    <>
     <div className="phone-wrapper slide-up-anim">
       <header className="game-header">
         <div className="game-header-logo" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>
@@ -74,7 +88,7 @@ export default function App() {
       </header>
 
       <main className="game-main">
-        <div className="game-content">
+        <div className={`game-content ${showBottomNav ? 'has-bottom-nav' : ''}`}>
           {view === 'landing' && (
             <div className="flex flex-col gap-24 scale-up-anim">
               <div className="panel panel-dark text-center" style={{ padding: '32px 24px', boxShadow: 'var(--shadow-card-ring)' }}>
@@ -113,18 +127,17 @@ export default function App() {
             <TeamLogin onLogin={handleTeamLogin} onBack={() => setView('landing')} />
           )}
 
-          {view === 'team-portal' && teamSession && (
-            <TeamPortal session={teamSession} onLogout={handleTeamLogout} onStartGame={() => setView('pub-hint-1')} />
+          {view === 'team-portal' && teamSession && activeTab === 'team' && (
+            <TeamPortal session={teamSession} onLogout={handleTeamLogout} onStartGame={() => setActiveTab('hints')} />
           )}
 
-          {view === 'pub-hint-1' && <PubHint1 onNext={() => setView('pub-hint-2')} />}
-          {view === 'pub-hint-2' && <PubHint2 onNext={() => setView('pub-hint-3')} />}
-          {view === 'pub-hint-3' && <PubHint3 onNext={() => setView('pub-hint-4')} />}
-          {view === 'pub-hint-4' && <PubHint4 onNext={() => setView('pub-hint-5')} />}
-          {view === 'pub-hint-5' && <PubHint5 onNext={() => setView('pub-hint-6')} />}
-          {view === 'pub-hint-6' && <PubHint6 onNext={() => setView('pub-hint-7')} />}
-          {view === 'pub-hint-7' && <PubHint7 onNext={() => setView('pub-hint-8')} />}
-          {view === 'pub-hint-8' && <PubHint8 onNext={() => setView('team-portal')} />}
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && (
+            <HintComponent
+              onNext={() => (hintIndex < HINT_PAGES.length ? setHintIndex(hintIndex + 1) : setActiveTab('team'))}
+            />
+          )}
+
+          {view === 'team-portal' && teamSession && activeTab === 'feed' && <Feed />}
 
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
@@ -132,5 +145,7 @@ export default function App() {
         </div>
       </main>
     </div>
+    {showBottomNav && <BottomNav active={activeTab} onChange={setActiveTab} />}
+    </>
   );
 }
