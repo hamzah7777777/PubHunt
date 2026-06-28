@@ -9,6 +9,7 @@ interface TeamOption {
   id: string;
   name: string;
   game_theme: string;
+  captain_name: string;
 }
 
 interface Props {
@@ -29,12 +30,22 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
   useEffect(() => {
     Promise.all([
       supabase.from('teams').select('id,name,game_theme').order('name'),
+      supabase.from('participants').select('team_id,full_name').eq('role', 'captain'),
       getCoverMap(),
-    ]).then(([teamsRes, covers]) => {
+    ]).then(([teamsRes, captainsRes, covers]) => {
       if (teamsRes.error) {
         setError('Could not load team list. Please try again later.');
       } else if (teamsRes.data) {
-        setTeams(teamsRes.data as TeamOption[]);
+        const captainByTeam = new Map<string, string>();
+        (captainsRes.data || []).forEach((p: { team_id: string; full_name: string }) => {
+          captainByTeam.set(p.team_id, p.full_name);
+        });
+        setTeams(
+          teamsRes.data.map((t: { id: string; name: string; game_theme: string }) => ({
+            ...t,
+            captain_name: captainByTeam.get(t.id) || t.name,
+          })),
+        );
       }
       setCoverMap(covers);
       setLoadingTeams(false);
@@ -46,7 +57,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
   const filteredTeams = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return teams;
-    return teams.filter(t => t.name.toLowerCase().includes(q) || t.game_theme.toLowerCase().includes(q));
+    return teams.filter(t => t.game_theme.toLowerCase().includes(q) || t.captain_name.toLowerCase().includes(q));
   }, [teams, search]);
 
   const selectTeam = (team: TeamOption) => {
@@ -103,7 +114,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
         <div className="panel panel-secondary text-center cover-reveal">
           <img src={coverFor(selectedTeam.game_theme)} alt={selectedTeam.game_theme} className="cover-reveal-img" />
           <span className="kicker" style={{ marginTop: 16 }}>{selectedTeam.game_theme}</span>
-          <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>{selectedTeam.name}</h2>
+          <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>{selectedTeam.captain_name}</h2>
 
           <label className="game-label" htmlFor="team-pin">Team PIN</label>
           <input
@@ -148,7 +159,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
         <input
           type="text"
           className="game-input"
-          placeholder="Search by team name…"
+          placeholder="Search by game or captain…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -165,9 +176,9 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
       ) : (
         <div className="cover-grid">
           {filteredTeams.map(t => (
-            <button key={t.id} type="button" className="cover-tile" onClick={() => selectTeam(t)} aria-label={`Select team themed ${t.game_theme}`}>
+            <button key={t.id} type="button" className="cover-tile" onClick={() => selectTeam(t)} aria-label={`Select game ${t.game_theme}`}>
               <img src={coverFor(t.game_theme)} alt={t.game_theme} loading="lazy" />
-              <span className="cover-tile-name">{t.name}</span>
+              <span className="cover-tile-name">{t.game_theme}</span>
             </button>
           ))}
           {filteredTeams.length === 0 && (
