@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const MAX_INPUT_BYTES = 20 * 1024 * 1024;
-const TARGET_PHOTO_BYTES = 2 * 1024 * 1024;
+const TARGET_PHOTO_BYTES = 500 * 1024;
 
 export default function TeamPortal({ session, onLogout, onStartGame }: Props) {
   const captain = session.participants.find(p => p.role === 'captain');
@@ -75,7 +75,7 @@ export default function TeamPortal({ session, onLogout, onStartGame }: Props) {
     const path = `${session.team_id}/team.jpg`;
     const { error: uploadError } = await supabase.storage
       .from('team-photos')
-      .upload(path, compressed, { upsert: true, contentType: 'image/jpeg' });
+      .upload(path, compressed, { upsert: true, contentType: 'image/jpeg', cacheControl: '31536000' });
 
     window.clearInterval(progressTimer);
 
