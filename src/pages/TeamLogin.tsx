@@ -30,15 +30,15 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
   useEffect(() => {
     Promise.all([
       supabase.from('teams').select('id,name,game_theme').order('name'),
-      supabase.from('participants').select('team_id,full_name').eq('role', 'captain'),
+      supabase.rpc('list_team_captains'),
       getCoverMap(),
     ]).then(([teamsRes, captainsRes, covers]) => {
       if (teamsRes.error) {
         setError('Could not load team list. Please try again later.');
       } else if (teamsRes.data) {
         const captainByTeam = new Map<string, string>();
-        (captainsRes.data || []).forEach((p: { team_id: string; full_name: string }) => {
-          captainByTeam.set(p.team_id, p.full_name);
+        (captainsRes.data || []).forEach((c: { team_id: string; captain_name: string }) => {
+          captainByTeam.set(c.team_id, c.captain_name);
         });
         setTeams(
           teamsRes.data.map((t: { id: string; name: string; game_theme: string }) => ({

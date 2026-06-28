@@ -139,6 +139,30 @@ $$;
 grant execute on function verify_team_pin(text, text) to anon;
 
 -- ============================================================
+-- PUBLIC CAPTAIN LOOKUP
+-- ============================================================
+-- The team login grid shows each team's captain instead of the team name,
+-- without exposing the rest of the roster (participants has no anon SELECT
+-- policy). SECURITY DEFINER lets this read participants despite that.
+
+drop function if exists list_team_captains();
+create or replace function list_team_captains()
+returns table (
+  team_id uuid,
+  captain_name text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select team_id, full_name
+  from participants
+  where role = 'captain';
+$$;
+
+grant execute on function list_team_captains() to anon;
+
+-- ============================================================
 -- TEAM PHOTO UPLOAD
 -- ============================================================
 -- Teams aren't authenticated via Supabase Auth (just PIN-gated through the
