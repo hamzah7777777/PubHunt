@@ -94,6 +94,9 @@ function SignupForm({
         Thanks for visiting! Leave your email below to stay in touch with{' '}
         {CLUB.name}.
       </p>
+      <p className="text-center text-lg font-bold text-red-600">
+        Please use your work email!
+      </p>
       <div className="flex flex-col gap-1.5">
         <FieldLabel>Email address</FieldLabel>
         <Input
