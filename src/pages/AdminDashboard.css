@@ -115,9 +115,8 @@
 }
 
 /* ----------------------------------------------------------
-   TEAM LIST — mobile-first cards. Each team is a CSS grid with
-   named areas so the same markup can reflow into a denser single
-   row at wider widths without duplicating JSX.
+   TEAM LIST — read-only summary cards; tap a card to open the
+   edit modal with the team's data and roster.
    ---------------------------------------------------------- */
 .admin-team-list {
   display: flex;
@@ -129,16 +128,50 @@
   background: #fff;
   border: 1px solid #e1e3e7;
   border-radius: 8px;
-  padding: 10px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "expand name   delete"
-    ".      theme  theme"
-    ".      status status"
-    ".      pin     members";
-  gap: 8px 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.admin-team-card:hover { border-color: #9aa0a8; }
+
+.admin-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.admin-card-name { font-weight: 600; overflow-wrap: anywhere; }
+.admin-card-theme { font-size: 13px; color: #6b6f76; }
+
+.admin-card-meta {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 6px;
+}
+
+.admin-chip {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef0f3;
+  color: #444;
+  white-space: nowrap;
+}
+.admin-chip-pin { font-family: monospace; }
+.admin-chip-confirmed { background: #e3f5e6; color: #1c7c2a; }
+.admin-chip-tbc { background: #fff4d6; color: #8a6400; }
+.admin-chip-withdrawn { background: #fdecea; color: #c0291c; }
+
+.admin-card-members {
+  font-size: 13px;
+  color: #6b6f76;
+  margin-left: auto;
 }
 
 .admin-field,
@@ -158,30 +191,7 @@
   border-color: #1a1a1a;
 }
 
-.admin-field-name { grid-area: name; font-weight: 600; }
-.admin-field-theme { grid-area: theme; }
-.admin-field-status { grid-area: status; }
-.admin-field-pin { grid-area: pin; font-family: monospace; }
-.admin-field-members {
-  grid-area: members;
-  text-align: right;
-  font-size: 13px;
-  color: #6b6f76;
-}
-.admin-field-delete { grid-area: delete; }
-
-.admin-expand-btn {
-  grid-area: expand;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #6b6f76;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-}
+.admin-field-pin { font-family: monospace; }
 
 /* ----------------------------------------------------------
    PARTICIPANTS — shown when a team card is expanded.
@@ -241,25 +251,6 @@
 }
 .admin-link-btn:hover { text-decoration: underline; }
 
-.admin-costume-photo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.admin-costume-thumb {
-  width: 72px;
-  height: 81px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #d0d3d8;
-}
-
-.admin-costume-empty {
-  font-size: 13px;
-  color: #6b6f76;
-}
-
 .admin-loading {
   padding: 40px;
   text-align: center;
@@ -267,16 +258,94 @@
 }
 
 /* ----------------------------------------------------------
-   DESKTOP — reflow each team card into one dense row once
-   there's enough width for it.
+   EDIT MODAL — all team data and edits live here.
+   ---------------------------------------------------------- */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.admin-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.admin-modal-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.admin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #555;
+}
+.admin-label-wide { grid-column: 1 / -1; }
+
+.admin-modal-subhead {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-empty-roster {
+  margin: 0;
+  font-size: 14px;
+  color: #6b6f76;
+}
+
+.admin-modal-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-btn-danger-solid {
+  background: #c0291c;
+  border-color: #c0291c;
+  color: #fff;
+}
+.admin-btn-danger-solid:hover { background: #a52217; }
+
+/* ----------------------------------------------------------
+   DESKTOP — denser layouts once there's width for them.
    ---------------------------------------------------------- */
 @media (min-width: 720px) {
   .admin-team-card {
-    grid-template-columns: auto 2fr 1fr 130px 90px 90px auto;
-    grid-template-areas: "expand name theme status pin members delete";
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
-
-  .admin-field-members { text-align: left; }
+  .admin-card-meta { flex-wrap: nowrap; }
 
   .admin-participant-row {
     flex-direction: row;

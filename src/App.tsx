@@ -5,22 +5,23 @@ import TeamLogin from './pages/TeamLogin';
 import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
-import Feed from './pages/Feed';
 import BottomNav, { type AppTab } from './components/BottomNav';
-import PubHint1 from './pages/pub hints/PubHint1';
-import PubHint2 from './pages/pub hints/PubHint2';
-import PubHint3 from './pages/pub hints/PubHint3';
-import PubHint4 from './pages/pub hints/PubHint4';
-import PubHint5 from './pages/pub hints/PubHint5';
-import PubHint6 from './pages/pub hints/PubHint6';
-import PubHint7 from './pages/pub hints/PubHint7';
-import PubHint8 from './pages/pub hints/PubHint8';
+import HintsMenu from './pages/HintsMenu';
+import StartHsbc from './pages/pub hints/StartHsbc';
+import HintMario from './pages/pub hints/HintMario';
+import HintPokemon from './pages/pub hints/HintPokemon';
+import HintAmongUs from './pages/pub hints/HintAmongUs';
+import HintMinecraft from './pages/pub hints/HintMinecraft';
+import HintBlackOps from './pages/pub hints/HintBlackOps';
+import { FINISH_HINT, ROUTE_HINTS } from './pages/hints';
 import type { TeamSession } from './types';
 import './App.css';
 
 type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard';
 
-const HINT_PAGES = [PubHint1, PubHint2, PubHint3, PubHint4, PubHint5, PubHint6, PubHint7, PubHint8];
+// Themed shells by position: pubs 1-4, then the finish line. Both routes
+// share the shells; the riddle text comes from ROUTE_HINTS.
+const HINT_SHELLS = [HintMario, HintPokemon, HintAmongUs, HintMinecraft, HintBlackOps];
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -31,7 +32,8 @@ export default function App() {
   });
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>('team');
-  const [hintIndex, setHintIndex] = useState(1);
+  // null = the hints menu; a number = that hint page
+  const [hintIndex, setHintIndex] = useState<number | null>(null);
 
   const toggleMute = () => {
     const next = !muted;
@@ -43,7 +45,7 @@ export default function App() {
     setTeamSession(session);
     sessionStorage.setItem('pubhunt_team_session', JSON.stringify(session));
     setActiveTab('team');
-    setHintIndex(1);
+    setHintIndex(null);
     setView('team-portal');
   };
 
@@ -51,8 +53,13 @@ export default function App() {
     setTeamSession(null);
     sessionStorage.removeItem('pubhunt_team_session');
     setActiveTab('team');
-    setHintIndex(1);
+    setHintIndex(null);
     setView('landing');
+  };
+
+  const handleTabChange = (tab: AppTab) => {
+    setActiveTab(tab);
+    if (tab === 'hints') setHintIndex(null);
   };
 
   const handleAdminLogin = () => {
@@ -70,7 +77,11 @@ export default function App() {
   }
 
   const showBottomNav = view === 'team-portal' && !!teamSession;
-  const HintComponent = HINT_PAGES[hintIndex - 1];
+  const teamRoute = teamSession?.route === 'B' ? 'B' : 'A';
+  const hintList = [...ROUTE_HINTS[teamRoute], FINISH_HINT];
+  // hintIndex: null = menu, 0 = start point page, 1..5 = pub hints/finish
+  const activeHint = hintIndex !== null && hintIndex > 0 ? hintList[hintIndex - 1] : null;
+  const HintShell = hintIndex !== null && hintIndex > 0 ? HINT_SHELLS[hintIndex - 1] : null;
 
   return (
     <>
@@ -128,17 +139,25 @@ export default function App() {
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'team' && (
-            <TeamPortal session={teamSession} onLogout={handleTeamLogout} onStartGame={() => setActiveTab('hints')} />
+            <TeamPortal session={teamSession} onLogout={handleTeamLogout} />
           )}
 
-          {view === 'team-portal' && teamSession && activeTab === 'hints' && (
-            <HintComponent
-              onNext={() => (hintIndex < HINT_PAGES.length ? setHintIndex(hintIndex + 1) : setActiveTab('team'))}
-              onBack={hintIndex > 1 ? () => setHintIndex(hintIndex - 1) : undefined}
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === null && (
+            <HintsMenu route={teamRoute} hints={hintList} onSelect={setHintIndex} />
+          )}
+
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === 0 && (
+            <StartHsbc onBack={() => setHintIndex(null)} onNext={() => setHintIndex(1)} />
+          )}
+
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex !== null && hintIndex > 0 && HintShell && activeHint && (
+            <HintShell
+              hint={activeHint.hint}
+              time={activeHint.time}
+              onNext={hintIndex < hintList.length ? () => setHintIndex(hintIndex + 1) : undefined}
+              onBack={() => setHintIndex(null)}
             />
           )}
-
-          {view === 'team-portal' && teamSession && activeTab === 'feed' && <Feed />}
 
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
@@ -146,7 +165,7 @@ export default function App() {
         </div>
       </main>
     </div>
-    {showBottomNav && <BottomNav active={activeTab} onChange={setActiveTab} />}
+    {showBottomNav && <BottomNav active={activeTab} onChange={handleTabChange} />}
     </>
   );
 }

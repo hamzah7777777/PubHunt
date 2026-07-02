@@ -99,7 +99,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
       team_name: row.team_name,
       game_theme: row.game_theme,
       status: row.status,
-      team_photo_url: row.team_photo_url,
+      route: row.route,
       participants: row.participants,
     });
   };

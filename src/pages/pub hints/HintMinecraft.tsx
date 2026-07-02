@@ -1,10 +1,12 @@
 import HintFrame from './HintFrame';
-import background from './Pub Hint 8 Assets/Background.jpg';
-import logo from './Pub Hint 8 Assets/Logo.png';
+import background from './Minecraft Assets/Background.jpg';
+import logo from './Minecraft Assets/Logo.png';
 
 interface Props {
-  onNext: () => void;
-  onBack?: () => void;
+  hint: string;
+  time: string;
+  onBack: () => void;
+  onNext?: () => void;
 }
 
 function StoneButton({ label, primary, onClick }: { label: string; primary?: boolean; onClick?: () => void }) {
@@ -33,7 +35,7 @@ function StoneButton({ label, primary, onClick }: { label: string; primary?: boo
   );
 }
 
-export default function PubHint8({ onNext, onBack }: Props) {
+export default function HintMinecraft({ hint, time, onBack, onNext }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', position: 'relative', overflow: 'hidden', fontFamily: "'Silkscreen', monospace" }}>
@@ -43,26 +45,26 @@ export default function PubHint8({ onNext, onBack }: Props) {
       <img src={logo} alt="Pub Hunt" style={{ position: 'absolute', top: '3%', left: '8%', width: '84%', filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.6))' }} />
 
       {/* level title plaque, in place of a Minecraft splash text */}
-      <div style={{ position: 'absolute', left: '8%', right: '8%', top: '41%', textAlign: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '1rem', lineHeight: 1.4, color: '#fff', textShadow: '2px 2px 0 #1a1208' }}>
-          Global place for fizzy tunes
+      <div style={{ position: 'absolute', left: '8%', right: '8%', top: '38%', textAlign: 'center' }}>
+        <h1 style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.5, color: '#fff', textShadow: '2px 2px 0 #1a1208' }}>
+          {hint}
         </h1>
       </div>
 
-      {/* hint */}
-      <div style={{ position: 'absolute', left: '8%', right: '8%', top: '49%' }}>
+      {/* time */}
+      <div style={{ position: 'absolute', left: '8%', right: '8%', top: '55%' }}>
         <div style={{ background: 'rgba(58,42,26,0.92)', border: '3px solid #8a7050', padding: 10 }}>
-          <strong style={{ fontSize: 10, color: '#fff' }}>HINT</strong>
-          <p style={{ margin: '6px 0 0', fontFamily: "'VT323', monospace", fontSize: 15, color: '#d8d8c8', lineHeight: 1.3 }}>
-            Think fizzy drinks, global tunes, and pixel-perfect party energy.
+          <strong style={{ fontSize: 10, color: '#fff' }}>TIME</strong>
+          <p style={{ margin: '6px 0 0', fontFamily: "'VT323', monospace", fontSize: 17, color: '#d8d8c8', lineHeight: 1.3 }}>
+            {time}
           </p>
         </div>
       </div>
 
       {/* menu buttons */}
       <div style={{ position: 'absolute', left: '8%', right: '8%', top: '70%', display: 'flex', flexDirection: 'column', gap: 7 }}>
-        {onBack && <StoneButton label="Previous Pub Hint" onClick={onBack} />}
-        <StoneButton label="Next Pub Hint" primary onClick={onNext} />
+        {onNext && <StoneButton label="Next Pub Hint" primary onClick={onNext} />}
+        <StoneButton label="Back" onClick={onBack} />
         <div style={{ display: 'flex', gap: 7 }}>
           <div style={{ flex: 1 }}><StoneButton label="Options..." /></div>
           <div style={{ flex: 1 }}><StoneButton label="Quit Game" /></div>

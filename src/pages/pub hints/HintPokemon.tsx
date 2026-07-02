@@ -1,21 +1,13 @@
 import HintFrame from './HintFrame';
 
 interface Props {
-  onNext: () => void;
-  onBack?: () => void;
+  hint: string;
+  time: string;
+  onBack: () => void;
+  onNext?: () => void;
 }
 
-const pokeball = (
-  <span style={{
-    display: 'inline-block', width: 16, height: 16, borderRadius: '50%',
-    background: 'linear-gradient(180deg, #e3350d 0 47%, #000 47%, #000 53%, #fff 53% 100%)',
-    border: '2px solid #1a1a1a', position: 'relative', verticalAlign: 'middle', marginRight: 8,
-  }}>
-    <span style={{ position: 'absolute', top: '50%', left: '50%', width: 6, height: 6, background: '#fff', border: '2px solid #1a1a1a', borderRadius: '50%', transform: 'translate(-50%,-50%)' }} />
-  </span>
-);
-
-export default function PubHint3({ onNext, onBack }: Props) {
+export default function HintPokemon({ hint, time, onBack, onNext }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Silkscreen', monospace", background: '#6b6fc9', padding: '14px 14px 0' }}>
@@ -41,8 +33,8 @@ export default function PubHint3({ onNext, onBack }: Props) {
       {/* battle-style HUD card */}
       <div style={{ margin: '-26px 14px 0', background: '#f8f8d8', border: '3px solid #1a1a1a', padding: '10px 14px', boxShadow: '3px 3px 0 0 #1a1a1a' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 9, color: '#1a1a1a' }}>
-          <span>HOUSES AND HARES</span>
-          <span>Lv.05</span>
+          <span>MYSTERY PUB</span>
+          <span>{time}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
           <span style={{ fontSize: 8, color: '#1a1a1a' }}>HP</span>
@@ -55,54 +47,47 @@ export default function PubHint3({ onNext, onBack }: Props) {
       {/* dialogue text box */}
       <div style={{ margin: '20px 14px 0', background: '#fff', border: '3px solid #1a1a1a', padding: 16, position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 5, border: '2px solid #1a1a1a', pointerEvents: 'none' }} />
-        <h1 style={{ margin: 0, fontFamily: "'Silkscreen', monospace", fontSize: '1.1rem', lineHeight: 1.6, color: '#1a1a1a' }}>In London it might be referred to as 'Houses and Hares'</h1>
+        <h1 style={{ margin: 0, fontFamily: "'Silkscreen', monospace", fontSize: '1rem', lineHeight: 1.6, color: '#1a1a1a' }}>{hint}</h1>
         <div style={{ position: 'absolute', bottom: 10, right: 14, width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '8px solid #1a1a1a' }} />
       </div>
 
-      {/* info panel */}
-      <div style={{ display: 'flex', gap: 12, margin: '16px 14px 0', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 140px', background: '#f8f8d8', border: '3px solid #1a1a1a', padding: 12 }}>
-          <strong style={{ fontSize: 9, display: 'flex', alignItems: 'center', marginBottom: 8, color: '#1a1a1a' }}>{pokeball}LOOK FOR</strong>
-          <p style={{ margin: 0, fontFamily: "'VT323', monospace", fontSize: 16, color: '#1a1a1a' }}>A green, leafy pub name with a twist on houses and hares.</p>
-        </div>
-      </div>
-
       <div style={{ padding: '20px 14px 24px', display: 'flex', gap: 10 }}>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            style={{
-              padding: '16px 14px',
-              fontFamily: "'Silkscreen', monospace",
-              fontSize: 12,
-              color: '#1a1a1a',
-              background: '#f8f8d8',
-              border: '3px solid #1a1a1a',
-              cursor: 'pointer',
-              boxShadow: '4px 4px 0 0 #1a1a1a',
-            }}
-          >
-            BACK
-          </button>
-        )}
         <button
           type="button"
-          onClick={onNext}
+          onClick={onBack}
           style={{
-            flex: 1,
-            padding: '16px 0',
+            flex: onNext ? undefined : 1,
+            padding: '16px 14px',
             fontFamily: "'Silkscreen', monospace",
             fontSize: 12,
-            color: '#fff',
-            background: '#3c5aa6',
+            color: '#1a1a1a',
+            background: '#f8f8d8',
             border: '3px solid #1a1a1a',
             cursor: 'pointer',
             boxShadow: '4px 4px 0 0 #1a1a1a',
           }}
         >
-          NEXT PUB HINT
+          BACK
         </button>
+        {onNext && (
+          <button
+            type="button"
+            onClick={onNext}
+            style={{
+              flex: 1,
+              padding: '16px 0',
+              fontFamily: "'Silkscreen', monospace",
+              fontSize: 12,
+              color: '#fff',
+              background: '#3c5aa6',
+              border: '3px solid #1a1a1a',
+              cursor: 'pointer',
+              boxShadow: '4px 4px 0 0 #1a1a1a',
+            }}
+          >
+            NEXT PUB HINT
+          </button>
+        )}
       </div>
     </div>
 

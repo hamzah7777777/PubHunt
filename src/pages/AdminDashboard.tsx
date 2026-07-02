@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, LogOut, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LogOut, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { AdminParticipant, AdminTeam } from '../types';
 import './AdminDashboard.css';
@@ -7,6 +7,12 @@ import './AdminDashboard.css';
 interface Props {
   onLogout: () => void;
 }
+
+const STATUS_LABEL: Record<string, string> = {
+  confirmed: 'Confirmed',
+  tbc: 'TBC',
+  withdrawn: 'Withdrawn',
+};
 
 function randomPin(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
@@ -17,7 +23,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [participants, setParticipants] = useState<AdminParticipant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -36,13 +42,18 @@ export default function AdminDashboard({ onLogout }: Props) {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!editingTeamId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEditingTeamId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editingTeamId]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     onLogout();
-  };
-
-  const toggleExpanded = (teamId: string) => {
-    setExpanded(prev => ({ ...prev, [teamId]: !prev[teamId] }));
   };
 
   const updateTeamField = (teamId: string, field: keyof AdminTeam, value: string) => {
@@ -52,7 +63,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const saveTeam = async (team: AdminTeam) => {
     const { error: saveError } = await supabase
       .from('teams')
-      .update({ name: team.name, game_theme: team.game_theme, status: team.status, pin: team.pin })
+      .update({ name: team.name, game_theme: team.game_theme, status: team.status, route: team.route, pin: team.pin })
       .eq('id', team.id);
     if (saveError) setError(saveError.message);
   };
@@ -64,6 +75,7 @@ export default function AdminDashboard({ onLogout }: Props) {
       setError(deleteError.message);
       return;
     }
+    setEditingTeamId(null);
     setTeams(prev => prev.filter(t => t.id !== teamId));
     setParticipants(prev => prev.filter(p => p.team_id !== teamId));
   };
@@ -73,7 +85,7 @@ export default function AdminDashboard({ onLogout }: Props) {
     if (!name) return;
     const { data, error: insertError } = await supabase
       .from('teams')
-      .insert({ name, game_theme: 'TBC', status: 'tbc', pin: randomPin() })
+      .insert({ name, game_theme: 'TBC', status: 'tbc', route: 'A', pin: randomPin() })
       .select()
       .single();
     if (insertError || !data) {
@@ -81,6 +93,7 @@ export default function AdminDashboard({ onLogout }: Props) {
       return;
     }
     setTeams(prev => [...prev, data as AdminTeam].sort((a, b) => a.name.localeCompare(b.name)));
+    setEditingTeamId((data as AdminTeam).id);
   };
 
   const updateParticipantField = (
@@ -128,6 +141,11 @@ export default function AdminDashboard({ onLogout }: Props) {
     return <div className="admin-dashboard admin-loading">Loading…</div>;
   }
 
+  const editingTeam = teams.find(t => t.id === editingTeamId) ?? null;
+  const editingParticipants = editingTeam
+    ? participants.filter(p => p.team_id === editingTeam.id)
+    : [];
+
   return (
     <div className="admin-dashboard">
       <div className="admin-topbar">
@@ -151,121 +169,186 @@ export default function AdminDashboard({ onLogout }: Props) {
 
         <div className="admin-team-list">
           {teams.map(team => {
-            const teamParticipants = participants.filter(p => p.team_id === team.id);
-            const isExpanded = !!expanded[team.id];
+            const memberCount = participants.filter(p => p.team_id === team.id).length;
             return (
-              <Fragment key={team.id}>
-                <div className="admin-team-card">
-                  <button className="admin-expand-btn" onClick={() => toggleExpanded(team.id)} aria-label="Toggle members">
-                    {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                  </button>
-
-                  <input
-                    className="admin-field admin-field-name"
-                    type="text"
-                    value={team.name}
-                    onChange={e => updateTeamField(team.id, 'name', e.target.value)}
-                    onBlur={() => saveTeam(team)}
-                  />
-
-                  <button className="admin-btn admin-btn-icon admin-btn-danger admin-field-delete" onClick={() => deleteTeam(team.id)} aria-label="Delete team">
-                    <Trash2 size={15} />
-                  </button>
-
-                  <input
-                    className="admin-field admin-field-theme"
-                    type="text"
-                    placeholder="Theme"
-                    value={team.game_theme}
-                    onChange={e => updateTeamField(team.id, 'game_theme', e.target.value)}
-                    onBlur={() => saveTeam(team)}
-                  />
-
-                  <select
-                    className="admin-select admin-field-status"
-                    value={team.status}
-                    onChange={e => {
-                      updateTeamField(team.id, 'status', e.target.value);
-                      saveTeam({ ...team, status: e.target.value });
-                    }}
-                  >
-                    <option value="confirmed">Confirmed</option>
-                    <option value="tbc">TBC</option>
-                    <option value="withdrawn">Withdrawn</option>
-                  </select>
-
-                  <input
-                    className="admin-field admin-field-pin"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="PIN"
-                    value={team.pin}
-                    onChange={e => updateTeamField(team.id, 'pin', e.target.value)}
-                    onBlur={() => saveTeam(team)}
-                  />
-
-                  <span className="admin-field-members">{teamParticipants.length} member{teamParticipants.length === 1 ? '' : 's'}</span>
+              <button
+                key={team.id}
+                type="button"
+                className="admin-team-card"
+                onClick={() => setEditingTeamId(team.id)}
+              >
+                <div className="admin-card-main">
+                  <span className="admin-card-name">{team.name}</span>
+                  <span className="admin-card-theme">{team.game_theme}</span>
                 </div>
-
-                {isExpanded && (
-                  <div className="admin-participant-list">
-                    <div className="admin-costume-photo">
-                      {team.team_photo_url ? (
-                        <a href={team.team_photo_url} target="_blank" rel="noreferrer">
-                          <img src={team.team_photo_url} alt={`${team.name} team photo`} className="admin-costume-thumb" />
-                        </a>
-                      ) : (
-                        <span className="admin-costume-empty">No costume photo uploaded yet</span>
-                      )}
-                    </div>
-                    {teamParticipants.map(p => (
-                      <div key={p.id} className="admin-participant-row">
-                        <input
-                          className="admin-field admin-participant-name"
-                          type="text"
-                          value={p.full_name}
-                          onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
-                          onBlur={() => saveParticipant(p)}
-                        />
-                        <div className="admin-participant-meta">
-                          <select
-                            className="admin-select"
-                            value={p.role}
-                            onChange={e => {
-                              updateParticipantField(p.id, 'role', e.target.value);
-                              saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
-                            }}
-                          >
-                            <option value="captain">Captain</option>
-                            <option value="participant">Participant</option>
-                          </select>
-                          <label className="admin-internal-checkbox">
-                            <input
-                              type="checkbox"
-                              checked={p.is_internal}
-                              onChange={e => {
-                                updateParticipantField(p.id, 'is_internal', e.target.checked);
-                                saveParticipant({ ...p, is_internal: e.target.checked });
-                              }}
-                            />
-                            Internal
-                          </label>
-                          <button className="admin-btn admin-btn-icon admin-btn-danger" onClick={() => deleteParticipant(p.id)} aria-label="Delete member">
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <button className="admin-link-btn" onClick={() => addParticipant(team.id)}>
-                      <Plus size={13} /> Add member
-                    </button>
-                  </div>
-                )}
-              </Fragment>
+                <div className="admin-card-meta">
+                  <span className={`admin-chip admin-chip-${team.status}`}>
+                    {STATUS_LABEL[team.status] || team.status}
+                  </span>
+                  <span className="admin-chip">Route {team.route}</span>
+                  <span className="admin-chip admin-chip-pin">PIN {team.pin}</span>
+                  <span className="admin-card-members">
+                    {memberCount} member{memberCount === 1 ? '' : 's'}
+                  </span>
+                </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {editingTeam && (
+        <div className="admin-modal-overlay" onClick={() => setEditingTeamId(null)}>
+          <div className="admin-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-head">
+              <h2>{editingTeam.name}</h2>
+              <button
+                className="admin-btn admin-btn-icon"
+                onClick={() => setEditingTeamId(null)}
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="admin-modal-grid">
+              <label className="admin-label admin-label-wide">
+                Team name
+                <input
+                  className="admin-field"
+                  type="text"
+                  value={editingTeam.name}
+                  onChange={e => updateTeamField(editingTeam.id, 'name', e.target.value)}
+                  onBlur={() => saveTeam(editingTeam)}
+                />
+              </label>
+
+              <label className="admin-label admin-label-wide">
+                Theme
+                <input
+                  className="admin-field"
+                  type="text"
+                  placeholder="Theme"
+                  value={editingTeam.game_theme}
+                  onChange={e => updateTeamField(editingTeam.id, 'game_theme', e.target.value)}
+                  onBlur={() => saveTeam(editingTeam)}
+                />
+              </label>
+
+              <label className="admin-label">
+                Status
+                <select
+                  className="admin-select"
+                  value={editingTeam.status}
+                  onChange={e => {
+                    updateTeamField(editingTeam.id, 'status', e.target.value);
+                    saveTeam({ ...editingTeam, status: e.target.value });
+                  }}
+                >
+                  <option value="confirmed">Confirmed</option>
+                  <option value="tbc">TBC</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </label>
+
+              <label className="admin-label">
+                Route
+                <select
+                  className="admin-select"
+                  value={editingTeam.route}
+                  onChange={e => {
+                    updateTeamField(editingTeam.id, 'route', e.target.value);
+                    saveTeam({ ...editingTeam, route: e.target.value });
+                  }}
+                >
+                  <option value="A">Route A</option>
+                  <option value="B">Route B</option>
+                </select>
+              </label>
+
+              <label className="admin-label">
+                PIN
+                <input
+                  className="admin-field admin-field-pin"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="PIN"
+                  value={editingTeam.pin}
+                  onChange={e => updateTeamField(editingTeam.id, 'pin', e.target.value)}
+                  onBlur={() => saveTeam(editingTeam)}
+                />
+              </label>
+            </div>
+
+            <h3 className="admin-modal-subhead">
+              Members ({editingParticipants.length})
+            </h3>
+
+            <div className="admin-participant-list">
+              {editingParticipants.map(p => (
+                <div key={p.id} className="admin-participant-row">
+                  <input
+                    className="admin-field admin-participant-name"
+                    type="text"
+                    value={p.full_name}
+                    onChange={e => updateParticipantField(p.id, 'full_name', e.target.value)}
+                    onBlur={() => saveParticipant(p)}
+                  />
+                  <div className="admin-participant-meta">
+                    <select
+                      className="admin-select"
+                      value={p.role}
+                      onChange={e => {
+                        updateParticipantField(p.id, 'role', e.target.value);
+                        saveParticipant({ ...p, role: e.target.value as 'captain' | 'participant' });
+                      }}
+                    >
+                      <option value="captain">Captain</option>
+                      <option value="participant">Participant</option>
+                    </select>
+                    <label className="admin-internal-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={p.is_internal}
+                        onChange={e => {
+                          updateParticipantField(p.id, 'is_internal', e.target.checked);
+                          saveParticipant({ ...p, is_internal: e.target.checked });
+                        }}
+                      />
+                      Internal
+                    </label>
+                    <button
+                      className="admin-btn admin-btn-icon admin-btn-danger"
+                      onClick={() => deleteParticipant(p.id)}
+                      aria-label="Delete member"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {editingParticipants.length === 0 && (
+                <p className="admin-empty-roster">No members yet.</p>
+              )}
+              <button className="admin-link-btn" onClick={() => addParticipant(editingTeam.id)}>
+                <Plus size={13} /> Add member
+              </button>
+            </div>
+
+            <div className="admin-modal-foot">
+              <button
+                className="admin-btn admin-btn-danger-solid"
+                onClick={() => deleteTeam(editingTeam.id)}
+              >
+                <Trash2 size={14} /> Delete team
+              </button>
+              <button className="admin-btn admin-btn-primary" onClick={() => setEditingTeamId(null)}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

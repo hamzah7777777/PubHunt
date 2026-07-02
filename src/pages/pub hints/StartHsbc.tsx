@@ -1,8 +1,9 @@
 import HintFrame from './HintFrame';
+import { START_POINT } from '../hints';
 
 interface Props {
+  onBack: () => void;
   onNext: () => void;
-  onBack?: () => void;
 }
 
 const hexagon = (
@@ -23,7 +24,7 @@ const hamburger = (
   </div>
 );
 
-export default function PubHint1({ onNext, onBack }: Props) {
+export default function StartHsbc({ onBack, onNext }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Roboto', Arial, sans-serif", background: '#ffffff', color: '#1a1a1a', imageRendering: 'auto' }}>
@@ -45,36 +46,34 @@ export default function PubHint1({ onNext, onBack }: Props) {
       {/* hero photo (recreated, not the real photograph) */}
       <div style={{ position: 'relative', height: 220, overflow: 'hidden', background: 'linear-gradient(165deg, #ffe1a8 0%, #ffb86b 30%, #f08a5d 55%, #6a8caf 85%)' }}>
         <div style={{ position: 'absolute', top: 14, right: 14, background: '#000', color: '#fff', padding: '8px 12px', borderRadius: 10, textAlign: 'center', lineHeight: 1.3 }}>
-          <span style={{ display: 'block', fontSize: 9, fontWeight: 700, letterSpacing: '0.02em' }}>CURRENT ACCOUNT</span>
-          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, fontWeight: 700 }}>SWITCH GUARANTEE &uarr;</span>
+          <span style={{ display: 'block', fontSize: 9, fontWeight: 700, letterSpacing: '0.02em' }}>START POINT</span>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, fontWeight: 700 }}>{START_POINT.time} &uarr;</span>
         </div>
       </div>
 
       {/* overlapping white card */}
       <div style={{ margin: '-26px 16px 0', background: '#fff', padding: '22px 18px 0', position: 'relative' }}>
-        <h1 style={{ fontFamily: "'Roboto', Arial, sans-serif", fontSize: '1.9rem', margin: 0, lineHeight: 1.2, fontWeight: 700, color: '#1a1a1a' }}>Grosvenor House Lvl5 (starting point)</h1>
+        <h1 style={{ fontFamily: "'Roboto', Arial, sans-serif", fontSize: '1.9rem', margin: 0, lineHeight: 1.2, fontWeight: 700, color: '#1a1a1a' }}>{START_POINT.name} (starting point)</h1>
         <p style={{ marginTop: 14, fontSize: 15, lineHeight: 1.6, color: '#454545' }}>
-          Think premium city rooftop spaces with a clean, appointed interior.
+          Everyone starts here — no hint needed. {START_POINT.time}, then your route begins.
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              style={{
-                padding: '14px 18px',
-                fontSize: 14,
-                fontWeight: 700,
-                color: '#db0011',
-                background: '#fff',
-                border: '2px solid #db0011',
-                cursor: 'pointer',
-              }}
-            >
-              Back
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '14px 18px',
+              fontSize: 14,
+              fontWeight: 700,
+              color: '#db0011',
+              background: '#fff',
+              border: '2px solid #db0011',
+              cursor: 'pointer',
+            }}
+          >
+            Back
+          </button>
           <button
             type="button"
             onClick={onNext}
@@ -89,7 +88,7 @@ export default function PubHint1({ onNext, onBack }: Props) {
               cursor: 'pointer',
             }}
           >
-            Next Pub Hint
+            First Pub Hint
           </button>
         </div>
 

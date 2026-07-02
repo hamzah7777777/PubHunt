@@ -1,7 +1,7 @@
-import { Compass, Rss, Users } from 'lucide-react';
+import { Compass, Users } from 'lucide-react';
 import { sfx } from '../lib/sfx';
 
-export type AppTab = 'team' | 'hints' | 'feed';
+export type AppTab = 'team' | 'hints';
 
 interface Props {
   active: AppTab;
@@ -11,7 +11,6 @@ interface Props {
 const TABS: { id: AppTab; label: string; icon: typeof Users }[] = [
   { id: 'team', label: 'Team', icon: Users },
   { id: 'hints', label: 'Hints', icon: Compass },
-  { id: 'feed', label: 'Feed', icon: Rss },
 ];
 
 export default function BottomNav({ active, onChange }: Props) {

@@ -10,7 +10,7 @@ export interface TeamSession {
   team_name: string;
   game_theme: string;
   status: string;
-  team_photo_url: string | null;
+  route: string;
   participants: Participant[];
 }
 
@@ -20,7 +20,7 @@ export interface AdminTeam {
   game_theme: string;
   pin: string;
   status: string;
-  team_photo_url: string | null;
+  route: string;
   created_at: string;
 }
 

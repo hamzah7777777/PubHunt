@@ -1,14 +1,16 @@
 import HintFrame from './HintFrame';
-import skyGradient from './Pub Hint 7 Assets/Skygradient.png';
-import stars from './Pub Hint 7 Assets/Stars.png';
-import bannerLogo from './Pub Hint 7 Assets/bannerLogo_AmongUs.png';
+import skyGradient from './Among Us Assets/Skygradient.png';
+import stars from './Among Us Assets/Stars.png';
+import bannerLogo from './Among Us Assets/bannerLogo_AmongUs.png';
 
 interface Props {
-  onNext: () => void;
-  onBack?: () => void;
+  hint: string;
+  time: string;
+  onBack: () => void;
+  onNext?: () => void;
 }
 
-export default function PubHint7({ onNext, onBack }: Props) {
+export default function HintAmongUs({ hint, time, onBack, onNext }: Props) {
   return (
     <HintFrame>
     <div style={{
@@ -26,7 +28,7 @@ export default function PubHint7({ onNext, onBack }: Props) {
 
       {/* lobby chip */}
       <div style={{ position: 'relative', display: 'flex', justifyContent: 'flex-end', padding: '10px 18px 0' }}>
-        <span style={{ background: 'rgba(10,15,25,0.7)', border: '2px solid #2d4a68', padding: '4px 10px', fontSize: 12, color: '#99d25a' }}>4 / 10 ONLINE</span>
+        <span style={{ background: 'rgba(10,15,25,0.7)', border: '2px solid #2d4a68', padding: '4px 10px', fontSize: 12, color: '#99d25a' }}>{time}</span>
       </div>
 
       {/* real Among Us logo, with the night sky showing through the outline */}
@@ -43,51 +45,52 @@ export default function PubHint7({ onNext, onBack }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(10,15,25,0.78)', border: '2px solid #2d4a68', padding: 14 }}>
           <div style={{ width: 18, height: 18, border: '2px solid #99d25a', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong style={{ color: '#fff', fontSize: 14 }}>Join your mATES</strong>
-            <p style={{ margin: '6px 0 0', color: '#cfd8e6', fontSize: 14 }}>Find the crew, stick together, and look for a pub with a social mission.</p>
+            <strong style={{ color: '#fff', fontSize: 15, lineHeight: 1.4, display: 'block' }}>{hint}</strong>
+            <p style={{ margin: '6px 0 0', color: '#cfd8e6', fontSize: 14 }}>Task window: {time}</p>
           </div>
         </div>
       </div>
 
       <div style={{ position: 'relative', padding: '24px 18px 24px', display: 'flex', gap: 10 }}>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            style={{
-              padding: '15px 18px',
-              fontFamily: "'Trebuchet MS', Verdana, sans-serif",
-              fontSize: 16,
-              fontWeight: 700,
-              color: '#99d25a',
-              background: 'transparent',
-              border: '2px solid #99d25a',
-              borderRadius: 18,
-              cursor: 'pointer',
-            }}
-          >
-            Back
-          </button>
-        )}
         <button
           type="button"
-          onClick={onNext}
+          onClick={onBack}
           style={{
-            flex: 1,
-            padding: '15px 0',
+            flex: onNext ? undefined : 1,
+            padding: '15px 18px',
             fontFamily: "'Trebuchet MS', Verdana, sans-serif",
             fontSize: 16,
             fontWeight: 700,
-            color: '#fff',
-            background: 'linear-gradient(180deg, #2a3a4d 0%, #16202c 100%)',
+            color: '#99d25a',
+            background: 'transparent',
             border: '2px solid #99d25a',
             borderRadius: 18,
             cursor: 'pointer',
-            boxShadow: '0 6px 0 0 #143018, 0 0 0 1px rgba(153,210,90,0.3)',
           }}
         >
-          Next Pub Hint
+          Back
         </button>
+        {onNext && (
+          <button
+            type="button"
+            onClick={onNext}
+            style={{
+              flex: 1,
+              padding: '15px 0',
+              fontFamily: "'Trebuchet MS', Verdana, sans-serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#fff',
+              background: 'linear-gradient(180deg, #2a3a4d 0%, #16202c 100%)',
+              border: '2px solid #99d25a',
+              borderRadius: 18,
+              cursor: 'pointer',
+              boxShadow: '0 6px 0 0 #143018, 0 0 0 1px rgba(153,210,90,0.3)',
+            }}
+          >
+            Next Pub Hint
+          </button>
+        )}
       </div>
 
       <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 18px 22px' }}>

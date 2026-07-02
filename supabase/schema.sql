@@ -13,9 +13,12 @@ create table if not exists teams (
   game_theme text not null default 'TBC',
   pin text not null,
   status text not null default 'confirmed' check (status in ('confirmed', 'tbc', 'withdrawn')),
-  team_photo_url text,
+  route text not null default 'A' check (route in ('A', 'B')),
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run against an existing database that predates this column.
+alter table teams add column if not exists route text not null default 'A' check (route in ('A', 'B'));
 
 create table if not exists participants (
   id uuid primary key default gen_random_uuid(),
@@ -29,22 +32,24 @@ create table if not exists participants (
 
 create index if not exists participants_team_id_idx on participants(team_id);
 
--- Safe to re-run against an existing database that predates this column.
--- Renames the original column name (costume_photo_url) if it's still
--- around, so already-uploaded photos aren't lost by the rename.
-do $$
-begin
-  if exists (
-    select 1 from information_schema.columns
-    where table_name = 'teams' and column_name = 'costume_photo_url'
-  ) and not exists (
-    select 1 from information_schema.columns
-    where table_name = 'teams' and column_name = 'team_photo_url'
-  ) then
-    alter table teams rename column costume_photo_url to team_photo_url;
-  end if;
-end $$;
-alter table teams add column if not exists team_photo_url text;
+-- ============================================================
+-- CLEANUP — removed team-photo + live-feed features (July 2026)
+-- ============================================================
+-- Drops everything those features created, so re-running this script
+-- against the existing database tidies it up. WARNING: destructive —
+-- deletes the stored photo URLs and the feed mirror table.
+-- The 'team-photos' storage bucket and its files can't be dropped
+-- cleanly from SQL; delete them from the dashboard (Storage) instead.
+drop trigger if exists teams_sync_team_photos on teams;
+drop function if exists sync_team_photos();
+drop table if exists team_photos;
+drop function if exists set_team_photo(uuid, text);
+drop function if exists set_team_costume_photo(uuid, text);
+drop policy if exists "anon can upload team photos" on storage.objects;
+drop policy if exists "anon can overwrite team photos" on storage.objects;
+drop policy if exists "anyone can view team photos" on storage.objects;
+alter table teams drop column if exists team_photo_url;
+alter table teams drop column if exists costume_photo_url;
 
 -- ============================================================
 -- ROW LEVEL SECURITY
@@ -101,7 +106,7 @@ returns table (
   team_name text,
   game_theme text,
   status text,
-  team_photo_url text,
+  route text,
   participants json
 )
 language plpgsql
@@ -115,7 +120,7 @@ begin
     t.name,
     t.game_theme,
     t.status,
-    t.team_photo_url,
+    t.route,
     coalesce(
       json_agg(
         json_build_object(
@@ -132,7 +137,7 @@ begin
   left join participants p on p.team_id = t.id
   where t.name = p_team_name
     and t.pin = p_pin
-  group by t.id, t.name, t.game_theme, t.status, t.team_photo_url;
+  group by t.id, t.name, t.game_theme, t.status, t.route;
 end;
 $$;
 
@@ -161,129 +166,3 @@ as $$
 $$;
 
 grant execute on function list_team_captains() to anon;
-
--- ============================================================
--- TEAM PHOTO UPLOAD
--- ============================================================
--- Teams aren't authenticated via Supabase Auth (just PIN-gated through the
--- RPC above), so there's no JWT to scope a storage policy to. We treat the
--- team_id (a UUID handed back only after a successful PIN check) the same
--- way the rest of this app treats a logged-in session: knowledge of it is
--- the bearer credential. This RPC lets the anon key update only the
--- team_photo_url column, nothing else, for a given team id.
-
-drop function if exists set_team_costume_photo(uuid, text);
-create or replace function set_team_photo(p_team_id uuid, p_photo_url text)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  update teams set team_photo_url = p_photo_url where id = p_team_id;
-end;
-$$;
-
-grant execute on function set_team_photo(uuid, text) to anon;
-
--- Storage bucket for team photos. Public read (so the uploaded
--- image URL can be displayed directly), uploads/overwrites via the anon key
--- since there's no Supabase Auth session for teams. Also grant the
--- authenticated role: admins get an anonymous Supabase Auth session on
--- login (see verify_admin_passphrase / signInAnonymously), which persists
--- in the browser and causes the same browser to send authenticated
--- requests for everything afterwards -- including team photo uploads.
-insert into storage.buckets (id, name, public)
-values ('team-photos', 'team-photos', true)
-on conflict (id) do nothing;
-
-drop policy if exists "anon can upload team photos" on storage.objects;
-create policy "anon can upload team photos"
-  on storage.objects for insert
-  to anon, authenticated
-  with check (bucket_id = 'team-photos');
-
-drop policy if exists "anon can overwrite team photos" on storage.objects;
-create policy "anon can overwrite team photos"
-  on storage.objects for update
-  to anon, authenticated
-  using (bucket_id = 'team-photos');
-
-drop policy if exists "anyone can view team photos" on storage.objects;
-create policy "anyone can view team photos"
-  on storage.objects for select
-  to public
-  using (bucket_id = 'team-photos');
-
--- ============================================================
--- LIVE TEAM FEED
--- ============================================================
--- A narrow, pin-free mirror of `teams` that every team's app can read and
--- subscribe to over Realtime. We don't put `teams` itself on a Realtime
--- publication because Realtime streams full row payloads straight off the
--- WAL, bypassing the column-level grant that hides `pin` from anon below —
--- this table physically has no pin column, so there's nothing to leak.
-
-create table if not exists team_photos (
-  team_id uuid primary key references teams(id) on delete cascade,
-  name text not null,
-  game_theme text not null,
-  status text not null,
-  team_photo_url text,
-  updated_at timestamptz not null default now()
-);
-
-alter table team_photos enable row level security;
-
-drop policy if exists "anyone can read the team feed" on team_photos;
-create policy "anyone can read the team feed"
-  on team_photos for select
-  to anon, authenticated
-  using (true);
-
-grant select on team_photos to anon, authenticated;
-
-create or replace function sync_team_photos()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  insert into team_photos (team_id, name, game_theme, status, team_photo_url, updated_at)
-  values (new.id, new.name, new.game_theme, new.status, new.team_photo_url, now())
-  on conflict (team_id) do update set
-    name = excluded.name,
-    game_theme = excluded.game_theme,
-    status = excluded.status,
-    team_photo_url = excluded.team_photo_url,
-    updated_at = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists teams_sync_team_photos on teams;
-create trigger teams_sync_team_photos
-  after insert or update on teams
-  for each row execute function sync_team_photos();
-
--- Backfill any teams that already existed before this table did.
-insert into team_photos (team_id, name, game_theme, status, team_photo_url)
-select id, name, game_theme, status, team_photo_url from teams
-on conflict (team_id) do update set
-  name = excluded.name,
-  game_theme = excluded.game_theme,
-  status = excluded.status,
-  team_photo_url = excluded.team_photo_url;
-
--- Stream inserts/updates to every subscribed client. Guarded so re-running
--- this script against a project that already has it doesn't error.
-do $$
-begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'team_photos'
-  ) then
-    alter publication supabase_realtime add table team_photos;
-  end if;
-end $$;
