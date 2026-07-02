@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Beer, Shield, Users, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from './lib/sfx';
+import { supabase } from './lib/supabase';
 import TeamLogin from './pages/TeamLogin';
 import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
@@ -24,16 +25,44 @@ type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-da
 const HINT_SHELLS = [HintMario, HintPokemon, HintAmongUs, HintMinecraft, HintBlackOps];
 
 export default function App() {
-  const [view, setView] = useState<View>('landing');
-  const [muted, setMuted] = useState(false);
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
-    const saved = sessionStorage.getItem('pubhunt_team_session');
+    const saved = localStorage.getItem('pubhunt_team_session');
     return saved ? JSON.parse(saved) : null;
   });
+  // A refresh shouldn't kick a logged-in team back to the landing page:
+  // restore the portal (and the tab/hint they were on) from localStorage.
+  const [view, setView] = useState<View>(() =>
+    localStorage.getItem('pubhunt_team_session') ? 'team-portal' : 'landing'
+  );
+  const [muted, setMuted] = useState(false);
   const [adminAuthed, setAdminAuthed] = useState(false);
-  const [activeTab, setActiveTab] = useState<AppTab>('team');
-  // null = the hints menu; a number = that hint page
-  const [hintIndex, setHintIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<AppTab>(() =>
+    localStorage.getItem('pubhunt_active_tab') === 'hints' ? 'hints' : 'team'
+  );
+  // null = the hints menu; 0 = the start point page; 1+ = that hint page
+  const [hintIndex, setHintIndex] = useState<number | null>(() => {
+    const saved = localStorage.getItem('pubhunt_hint_index');
+    if (saved === null) return null;
+    const n = Number(saved);
+    return Number.isInteger(n) && n >= 0 && n <= HINT_SHELLS.length ? n : null;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pubhunt_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (hintIndex === null) localStorage.removeItem('pubhunt_hint_index');
+    else localStorage.setItem('pubhunt_hint_index', String(hintIndex));
+  }, [hintIndex]);
+
+  // Admins keep a Supabase auth session across refreshes; remember they're
+  // authed so the Host button goes straight back to the dashboard.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setAdminAuthed(true);
+    });
+  }, []);
 
   const toggleMute = () => {
     const next = !muted;
@@ -43,7 +72,7 @@ export default function App() {
 
   const handleTeamLogin = (session: TeamSession) => {
     setTeamSession(session);
-    sessionStorage.setItem('pubhunt_team_session', JSON.stringify(session));
+    localStorage.setItem('pubhunt_team_session', JSON.stringify(session));
     setActiveTab('team');
     setHintIndex(null);
     setView('team-portal');
@@ -51,7 +80,9 @@ export default function App() {
 
   const handleTeamLogout = () => {
     setTeamSession(null);
-    sessionStorage.removeItem('pubhunt_team_session');
+    localStorage.removeItem('pubhunt_team_session');
+    localStorage.removeItem('pubhunt_active_tab');
+    localStorage.removeItem('pubhunt_hint_index');
     setActiveTab('team');
     setHintIndex(null);
     setView('landing');
