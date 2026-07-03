@@ -269,29 +269,6 @@ p {
 }
 .btn-secondary:focus-visible { outline-color: var(--border-purple); }
 
-/* Fully completed quiz/challenge boxes */
-.btn-success {
-  background: var(--fg-success-strong);
-  border-color: var(--border-default);
-  color: var(--color-dark);
-  box-shadow: var(--shadow-btn-secondary);
-}
-.btn-success:hover, .btn-success:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0 0 0 0 transparent;
-}
-.btn-success:focus-visible { outline-color: var(--border-success); }
-
-/* Done/total fraction chip inside quiz/challenge buttons */
-.progress-frac {
-  margin-left: auto;
-  font-size: 0.75em;
-  border: 2px solid currentColor;
-  border-radius: 999px;
-  padding: 0.35em 0.7em;
-  white-space: nowrap;
-}
-
 .btn-ghost {
   background: transparent;
   border-color: transparent;
