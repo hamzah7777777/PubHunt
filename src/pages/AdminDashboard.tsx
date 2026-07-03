@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Check, LogOut, Plus, Trash2, X } from 'lucide-react';
+import { ClipboardCheck, LogOut, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ROUTE_QUIZZES } from './quiz';
-import { PHOTO_CHALLENGE } from './photoChallenge';
-import { ANAGRAM_CHALLENGE } from './anagramChallenge';
-import { CONSOLE_CHALLENGE } from './consoleChallenge';
-import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
-import { MISSING_VOWELS_CHALLENGE } from './missingVowelsChallenge';
+import AdminMarkingPage from './AdminMarkingPage';
+import {
+  SECTION_KEYS,
+  SECTION_LABELS,
+  SECTION_MAX,
+  SECTION_SHORT_LABELS,
+  TOTAL_MAX,
+  computeTeamScores,
+  withRanks,
+  type AnswerSets,
+  type SectionKey,
+} from './adminScoring';
 import type {
   AdminParticipant,
   AdminTeam,
@@ -33,6 +39,27 @@ function randomPin(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+function LeaderboardList({ rows }: { rows: { rank: number; name: string; points: number }[] }) {
+  if (rows.length === 0) {
+    return <p className="admin-empty-roster">No points scored yet.</p>;
+  }
+  return (
+    <ol className="admin-lb-list">
+      {rows.map(r => (
+        <li key={r.name} className="admin-lb-row">
+          <span className={`admin-lb-rank ${r.rank <= 3 ? `admin-lb-rank-${r.rank}` : ''}`}>
+            {r.rank}
+          </span>
+          <span className="admin-lb-name">{r.name}</span>
+          <span className="admin-lb-points">
+            {r.points} pt{r.points === 1 ? '' : 's'}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function AdminDashboard({ onLogout }: Props) {
   const [teams, setTeams] = useState<AdminTeam[]>([]);
   const [participants, setParticipants] = useState<AdminParticipant[]>([]);
@@ -45,9 +72,9 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
-  const [section, setSection] = useState<
-    'teams' | 'quiz' | 'photos' | 'anagrams' | 'consoles' | 'brain' | 'vowels'
-  >('teams');
+  // All the marking lives on its own page; the dashboard has the rest.
+  const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
+  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard'>('teams');
 
   useEffect(() => {
     (async () => {
@@ -273,6 +300,43 @@ export default function AdminDashboard({ onLogout }: Props) {
     ? participants.filter(p => p.team_id === editingTeam.id)
     : [];
 
+  const answerSets: AnswerSets = {
+    quiz: quizAnswers,
+    photos: photoAnswers,
+    anagrams: anagramAnswers,
+    consoles: consoleAnswers,
+    brain: brainAnswers,
+    vowels: vowelsAnswers,
+  };
+
+  const unmarkedCount =
+    quizAnswers.filter(a => a.is_correct === null).length +
+    photoAnswers.filter(a => a.character_correct === null).length +
+    photoAnswers.filter(a => a.game_correct === null).length +
+    anagramAnswers.filter(a => a.is_correct === null).length +
+    consoleAnswers.filter(a => a.is_correct === null).length +
+    brainAnswers.filter(a => a.is_correct === null).length +
+    vowelsAnswers.filter(a => a.is_correct === null).length;
+
+  // Everything below only counts answers marked correct, so scores climb
+  // as marking progresses.
+  const scoreRows = withRanks(
+    teams
+      .map(team => ({ team, scores: computeTeamScores(team.id, answerSets) }))
+      .sort((a, b) => b.scores.total - a.scores.total || a.team.name.localeCompare(b.team.name)),
+    row => row.scores.total
+  );
+
+  const leaderboardFor = (key: SectionKey | 'total') =>
+    withRanks(
+      scoreRows
+        .map(({ team, scores }) => ({ name: team.name, points: key === 'total' ? scores.total : scores[key] }))
+        .filter(r => r.points > 0)
+        .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name))
+        .slice(0, 10),
+      r => r.points
+    );
+
   return (
     <div className="admin-dashboard">
       <div className="admin-topbar">
@@ -285,534 +349,159 @@ export default function AdminDashboard({ onLogout }: Props) {
       <div className="admin-body">
         {error && <div className="admin-error">{error}</div>}
 
-        <div className="admin-tabs">
-          <button
-            className={`admin-btn admin-tab ${section === 'teams' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('teams')}
-          >
-            Teams
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'quiz' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('quiz')}
-          >
-            Quiz Marking
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'photos' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('photos')}
-          >
-            Photo Marking
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'anagrams' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('anagrams')}
-          >
-            Anagram Marking
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'consoles' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('consoles')}
-          >
-            Console Marking
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'brain' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('brain')}
-          >
-            Brain Training Marking
-          </button>
-          <button
-            className={`admin-btn admin-tab ${section === 'vowels' ? 'admin-tab-active' : ''}`}
-            onClick={() => setSection('vowels')}
-          >
-            Missing Vowels Marking
-          </button>
-        </div>
-
-        {section === 'quiz' && (
+        {page === 'marking' ? (
+          <AdminMarkingPage
+            teams={teams}
+            quizAnswers={quizAnswers}
+            photoAnswers={photoAnswers}
+            anagramAnswers={anagramAnswers}
+            consoleAnswers={consoleAnswers}
+            brainAnswers={brainAnswers}
+            vowelsAnswers={vowelsAnswers}
+            onMarkQuiz={markAnswer}
+            onMarkPhoto={markPhotoAnswer}
+            onMarkAnagram={markAnagramAnswer}
+            onMarkConsole={markConsoleAnswer}
+            onMarkBrain={markBrainAnswer}
+            onMarkVowels={markVowelsAnswer}
+            onBack={() => setPage('dashboard')}
+          />
+        ) : (
           <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {quizAnswers.length} answers · {quizAnswers.filter(a => a.is_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {quizAnswers.length === 0 && (
-              <p className="admin-empty-roster">No quiz answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = quizAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const route = team.route === 'B' ? 'B' : 'A';
-                const correct = teamAnswers.filter(a => a.is_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        Route {route} · {correct}/{teamAnswers.length} correct
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => (
-                        <div key={a.id} className="admin-quiz-row">
-                          <div className="admin-quiz-question">
-                            <span className="admin-chip">
-                              Quiz {a.quiz_number} · Q{a.question_number}
-                            </span>
-                            <span className="admin-quiz-question-text">
-                              {ROUTE_QUIZZES[route][a.quiz_number - 1]?.[a.question_number - 1] ?? ''}
-                            </span>
-                          </div>
-                          <div className="admin-quiz-answer-line">
-                            <span className="admin-quiz-answer-text">{a.answer}</span>
-                            <div className="admin-quiz-marks">
-                              <button
-                                className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
-                                onClick={() => markAnswer(a, true)}
-                                aria-label="Mark correct"
-                              >
-                                <Check size={16} />
-                              </button>
-                              <button
-                                className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
-                                onClick={() => markAnswer(a, false)}
-                                aria-label="Mark incorrect"
-                              >
-                                <X size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'photos' && (
-          <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {photoAnswers.length} answers ·{' '}
-                {photoAnswers.filter(a => a.character_correct === null || a.game_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {photoAnswers.length === 0 && (
-              <p className="admin-empty-roster">No photo answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = photoAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const points =
-                  teamAnswers.filter(a => a.character_correct === true).length +
-                  teamAnswers.filter(a => a.game_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        {points}/{teamAnswers.length * 2} points
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => {
-                        const item = PHOTO_CHALLENGE[a.photo_number - 1];
-                        return (
-                          <div key={a.id} className="admin-quiz-row">
-                            <div className="admin-quiz-question">
-                              {item && (
-                                <img
-                                  className="admin-photo-thumb"
-                                  src={item.image}
-                                  alt={`Photo ${a.photo_number}`}
-                                  loading="lazy"
-                                />
-                              )}
-                              <span className="admin-chip">Photo {a.photo_number}</span>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.character_answer}
-                                <span className="admin-photo-expected">Character: {item?.character ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.character_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markPhotoAnswer(a, 'character_correct', true)}
-                                  aria-label="Mark character correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.character_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markPhotoAnswer(a, 'character_correct', false)}
-                                  aria-label="Mark character incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.game_answer}
-                                <span className="admin-photo-expected">Game: {item?.game ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.game_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markPhotoAnswer(a, 'game_correct', true)}
-                                  aria-label="Mark game correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.game_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markPhotoAnswer(a, 'game_correct', false)}
-                                  aria-label="Mark game incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'anagrams' && (
-          <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {anagramAnswers.length} answers ·{' '}
-                {anagramAnswers.filter(a => a.is_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {anagramAnswers.length === 0 && (
-              <p className="admin-empty-roster">No anagram answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = anagramAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const correct = teamAnswers.filter(a => a.is_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        {correct}/{teamAnswers.length} correct
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => {
-                        const item = ANAGRAM_CHALLENGE[a.anagram_number - 1];
-                        return (
-                          <div key={a.id} className="admin-quiz-row">
-                            <div className="admin-quiz-question">
-                              <span className="admin-chip">Anagram {a.anagram_number}</span>
-                              <span className="admin-quiz-question-text">{item?.anagram ?? ''}</span>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.answer}
-                                <span className="admin-photo-expected">Game: {item?.game ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markAnagramAnswer(a, true)}
-                                  aria-label="Mark correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markAnagramAnswer(a, false)}
-                                  aria-label="Mark incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'consoles' && (
-          <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {consoleAnswers.length} answers ·{' '}
-                {consoleAnswers.filter(a => a.is_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {consoleAnswers.length === 0 && (
-              <p className="admin-empty-roster">No console answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = consoleAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const correct = teamAnswers.filter(a => a.is_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        {correct}/{teamAnswers.length} correct
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => {
-                        const item = CONSOLE_CHALLENGE[a.console_number - 1];
-                        return (
-                          <div key={a.id} className="admin-quiz-row">
-                            <div className="admin-quiz-question">
-                              {item && (
-                                <img
-                                  className="admin-photo-thumb"
-                                  src={item.image}
-                                  alt={`Console ${a.console_number}`}
-                                  loading="lazy"
-                                />
-                              )}
-                              <span className="admin-chip">Console {a.console_number}</span>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.answer}
-                                <span className="admin-photo-expected">Console: {item?.console ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markConsoleAnswer(a, true)}
-                                  aria-label="Mark correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markConsoleAnswer(a, false)}
-                                  aria-label="Mark incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'brain' && (
-          <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {brainAnswers.length} answers ·{' '}
-                {brainAnswers.filter(a => a.is_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {brainAnswers.length === 0 && (
-              <p className="admin-empty-roster">No brain training answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = brainAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const correct = teamAnswers.filter(a => a.is_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        {correct}/{teamAnswers.length} correct
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => {
-                        const item = BRAIN_TRAINING_CHALLENGE[a.question_number - 1];
-                        return (
-                          <div key={a.id} className="admin-quiz-row">
-                            <div className="admin-quiz-question">
-                              <span className="admin-chip">Q{a.question_number}</span>
-                              <span className="admin-quiz-question-text">{item?.question ?? ''}</span>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.answer}
-                                <span className="admin-photo-expected">Answer: {item?.answer ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markBrainAnswer(a, true)}
-                                  aria-label="Mark correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markBrainAnswer(a, false)}
-                                  aria-label="Mark incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'vowels' && (
-          <>
-            <div className="admin-toolbar">
-              <span className="admin-stats">
-                {vowelsAnswers.length} answers ·{' '}
-                {vowelsAnswers.filter(a => a.is_correct === null).length} unmarked
-              </span>
-            </div>
-
-            {vowelsAnswers.length === 0 && (
-              <p className="admin-empty-roster">No missing vowels answers submitted yet.</p>
-            )}
-
-            <div className="admin-team-list">
-              {teams.map(team => {
-                const teamAnswers = vowelsAnswers.filter(a => a.team_id === team.id);
-                if (teamAnswers.length === 0) return null;
-                const correct = teamAnswers.filter(a => a.is_correct === true).length;
-                return (
-                  <div key={team.id} className="admin-team-card admin-quiz-card">
-                    <div className="admin-card-main">
-                      <span className="admin-card-name">{team.name}</span>
-                      <span className="admin-card-theme">
-                        {correct}/{teamAnswers.length} correct
-                      </span>
-                    </div>
-                    <div className="admin-quiz-answers">
-                      {teamAnswers.map(a => {
-                        const item = MISSING_VOWELS_CHALLENGE[a.puzzle_number - 1];
-                        return (
-                          <div key={a.id} className="admin-quiz-row">
-                            <div className="admin-quiz-question">
-                              <span className="admin-chip">Puzzle {a.puzzle_number}</span>
-                              <span className="admin-quiz-question-text">{item?.puzzle ?? ''}</span>
-                            </div>
-                            <div className="admin-quiz-answer-line">
-                              <span className="admin-quiz-answer-text">
-                                {a.answer}
-                                <span className="admin-photo-expected">Answer: {item?.answer ?? '?'}</span>
-                              </span>
-                              <div className="admin-quiz-marks">
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
-                                  onClick={() => markVowelsAnswer(a, true)}
-                                  aria-label="Mark correct"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
-                                  onClick={() => markVowelsAnswer(a, false)}
-                                  aria-label="Mark incorrect"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {section === 'teams' && (
-          <>
-        <div className="admin-toolbar">
-          <span className="admin-stats">
-            {teams.length} teams · {participants.length} participants
-          </span>
-          <button id="admin-add-team-btn" className="admin-btn admin-btn-primary" onClick={addTeam}>
-            <Plus size={14} /> Add team
-          </button>
-        </div>
-
-        <div className="admin-team-list">
-          {teams.map(team => {
-            const memberCount = participants.filter(p => p.team_id === team.id).length;
-            return (
+            <div className="admin-tabs">
               <button
-                key={team.id}
-                type="button"
-                className="admin-team-card"
-                onClick={() => setEditingTeamId(team.id)}
+                className={`admin-btn admin-tab ${section === 'teams' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('teams')}
               >
-                <div className="admin-card-main">
-                  <span className="admin-card-name">{team.name}</span>
-                  <span className="admin-card-theme">{team.game_theme}</span>
-                </div>
-                <div className="admin-card-meta">
-                  <span className={`admin-chip admin-chip-${team.status}`}>
-                    {STATUS_LABEL[team.status] || team.status}
-                  </span>
-                  <span className="admin-chip">Route {team.route}</span>
-                  <span className="admin-chip admin-chip-pin">PIN {team.pin}</span>
-                  <span className="admin-card-members">
-                    {memberCount} member{memberCount === 1 ? '' : 's'}
-                  </span>
-                </div>
+                Teams
               </button>
-            );
-          })}
-        </div>
+              <button
+                className={`admin-btn admin-tab ${section === 'scores' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('scores')}
+              >
+                Scores
+              </button>
+              <button
+                className={`admin-btn admin-tab ${section === 'leaderboard' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('leaderboard')}
+              >
+                Leaderboards
+              </button>
+              <button
+                className="admin-btn admin-btn-primary admin-marking-link"
+                onClick={() => setPage('marking')}
+              >
+                <ClipboardCheck size={14} /> Marking
+                {unmarkedCount > 0 ? ` (${unmarkedCount})` : ''}
+              </button>
+            </div>
+
+            {section === 'teams' && (
+              <>
+                <div className="admin-toolbar">
+                  <span className="admin-stats">
+                    {teams.length} teams · {participants.length} participants
+                  </span>
+                  <button id="admin-add-team-btn" className="admin-btn admin-btn-primary" onClick={addTeam}>
+                    <Plus size={14} /> Add team
+                  </button>
+                </div>
+
+                <div className="admin-team-list">
+                  {teams.map(team => {
+                    const memberCount = participants.filter(p => p.team_id === team.id).length;
+                    return (
+                      <button
+                        key={team.id}
+                        type="button"
+                        className="admin-team-card"
+                        onClick={() => setEditingTeamId(team.id)}
+                      >
+                        <div className="admin-card-main">
+                          <span className="admin-card-name">{team.name}</span>
+                          <span className="admin-card-theme">{team.game_theme}</span>
+                        </div>
+                        <div className="admin-card-meta">
+                          <span className={`admin-chip admin-chip-${team.status}`}>
+                            {STATUS_LABEL[team.status] || team.status}
+                          </span>
+                          <span className="admin-chip">Route {team.route}</span>
+                          <span className="admin-chip admin-chip-pin">PIN {team.pin}</span>
+                          <span className="admin-card-members">
+                            {memberCount} member{memberCount === 1 ? '' : 's'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {section === 'scores' && (
+              <>
+                <div className="admin-toolbar">
+                  <span className="admin-stats">
+                    Points count answers marked correct · {unmarkedCount} still unmarked
+                  </span>
+                </div>
+
+                <div className="admin-table-wrap">
+                  <table className="admin-score-table">
+                    <thead>
+                      <tr>
+                        <th className="admin-score-rank">#</th>
+                        <th className="admin-score-team">Team</th>
+                        {SECTION_KEYS.map(key => (
+                          <th key={key}>
+                            {SECTION_SHORT_LABELS[key]}
+                            <span className="admin-score-max"> /{SECTION_MAX[key]}</span>
+                          </th>
+                        ))}
+                        <th>
+                          Total<span className="admin-score-max"> /{TOTAL_MAX}</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scoreRows.map(({ team, scores, rank }) => (
+                        <tr key={team.id}>
+                          <td className="admin-score-rank">{rank}</td>
+                          <td className="admin-score-team">{team.name}</td>
+                          {SECTION_KEYS.map(key => (
+                            <td key={key}>{scores[key]}</td>
+                          ))}
+                          <td className="admin-score-total">{scores.total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {section === 'leaderboard' && (
+              <>
+                <div className="admin-toolbar">
+                  <span className="admin-stats">
+                    Top 10 per section · teams with 0 points aren't shown
+                  </span>
+                </div>
+
+                <div className="admin-lb-grid">
+                  <div className="admin-lb-card admin-lb-overall">
+                    <h3>Overall</h3>
+                    <LeaderboardList rows={leaderboardFor('total')} />
+                  </div>
+                  {SECTION_KEYS.map(key => (
+                    <div key={key} className="admin-lb-card">
+                      <h3>{SECTION_LABELS[key]}</h3>
+                      <LeaderboardList rows={leaderboardFor(key)} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
