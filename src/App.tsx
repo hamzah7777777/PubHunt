@@ -10,7 +10,7 @@ import BottomNav, { type AppTab } from './components/BottomNav';
 import HintsMenu from './pages/HintsMenu';
 import QuizMenu from './pages/QuizMenu';
 import QuizPage from './pages/QuizPage';
-import ChallengesPage from './pages/ChallengesPage';
+import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
 import HintMario from './pages/pub hints/HintMario';
 import HintPokemon from './pages/pub hints/HintPokemon';
@@ -57,6 +57,14 @@ export default function App() {
     const n = Number(saved);
     return Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
   });
+  // null = the challenges menu; otherwise that challenge's page. A refresh
+  // shouldn't kick the team back to the menu if they were mid challenge.
+  const [challengeSubpage, setChallengeSubpage] = useState<ChallengeSubpage>(() => {
+    const saved = localStorage.getItem('pubhunt_challenge_subpage');
+    return saved === 'photo' || saved === 'anagram' || saved === 'console' || saved === 'brain' || saved === 'vowels'
+      ? saved
+      : null;
+  });
 
   useEffect(() => {
     localStorage.setItem('pubhunt_active_tab', activeTab);
@@ -71,6 +79,11 @@ export default function App() {
     if (quizNumber === null) localStorage.removeItem('pubhunt_quiz_number');
     else localStorage.setItem('pubhunt_quiz_number', String(quizNumber));
   }, [quizNumber]);
+
+  useEffect(() => {
+    if (challengeSubpage === null) localStorage.removeItem('pubhunt_challenge_subpage');
+    else localStorage.setItem('pubhunt_challenge_subpage', challengeSubpage);
+  }, [challengeSubpage]);
 
   // Admins keep a Supabase auth session across refreshes; remember they're
   // authed so the Host button goes straight back to the dashboard.
@@ -92,6 +105,7 @@ export default function App() {
     setActiveTab('team');
     setHintIndex(null);
     setQuizNumber(null);
+    setChallengeSubpage(null);
     setView('team-portal');
   };
 
@@ -105,6 +119,7 @@ export default function App() {
     setActiveTab('team');
     setHintIndex(null);
     setQuizNumber(null);
+    setChallengeSubpage(null);
     setView('landing');
   };
 
@@ -112,6 +127,7 @@ export default function App() {
     setActiveTab(tab);
     if (tab === 'hints') setHintIndex(null);
     if (tab === 'quiz') setQuizNumber(null);
+    if (tab === 'challenges') setChallengeSubpage(null);
   };
 
   const handleAdminLogin = () => {
@@ -212,7 +228,7 @@ export default function App() {
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber === null && (
-            <QuizMenu route={teamRoute} onSelect={setQuizNumber} />
+            <QuizMenu teamId={teamSession.team_id} route={teamRoute} onSelect={setQuizNumber} />
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber !== null && (
@@ -225,7 +241,11 @@ export default function App() {
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'challenges' && (
-            <ChallengesPage teamId={teamSession.team_id} />
+            <ChallengesPage
+              teamId={teamSession.team_id}
+              subpage={challengeSubpage}
+              onSubpageChange={setChallengeSubpage}
+            />
           )}
 
           {view === 'admin-login' && (

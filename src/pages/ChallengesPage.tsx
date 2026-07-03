@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Brain, Camera, Gamepad2, Joystick, Shuffle, SpellCheck } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
 import PhotoChallengePage from './PhotoChallengePage';
 import AnagramChallengePage from './AnagramChallengePage';
 import ConsoleChallengePage from './ConsoleChallengePage';
 import BrainTrainingChallengePage from './BrainTrainingChallengePage';
 import MissingVowelsChallengePage from './MissingVowelsChallengePage';
+import { PHOTO_CHALLENGE } from './photoChallenge';
+import { ANAGRAM_CHALLENGE } from './anagramChallenge';
+import { CONSOLE_CHALLENGE } from './consoleChallenge';
+import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
+import { MISSING_VOWELS_CHALLENGE } from './missingVowelsChallenge';
 
 const facebookIcon = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -13,50 +19,88 @@ const facebookIcon = (
   </svg>
 );
 
+export type ChallengeSubpage = 'photo' | 'anagram' | 'console' | 'brain' | 'vowels' | null;
+
 interface Props {
   teamId: string;
+  subpage: ChallengeSubpage;
+  onSubpageChange: (page: ChallengeSubpage) => void;
 }
 
-type ChallengeSubpage = 'photo' | 'anagram' | 'console' | 'brain' | 'vowels' | null;
+type ChallengeKey = Exclude<ChallengeSubpage, null>;
 
-export default function ChallengesPage({ teamId }: Props) {
-  // A refresh shouldn't kick the team back to the challenges menu if they
-  // were mid challenge; same pattern as the hint/quiz pages.
-  const [subpage, setSubpage] = useState<ChallengeSubpage>(() => {
-    const saved = localStorage.getItem('pubhunt_challenge_subpage');
-    return saved === 'photo' || saved === 'anagram' || saved === 'console' || saved === 'brain' || saved === 'vowels'
-      ? saved
-      : null;
+const CHALLENGE_BUTTONS: { page: ChallengeKey; icon: typeof Gamepad2; label: string; total: number }[] = [
+  { page: 'photo', icon: Gamepad2, label: 'Photo Challenge : Characters', total: PHOTO_CHALLENGE.length },
+  { page: 'anagram', icon: Shuffle, label: 'Anagram Challenge : Games', total: ANAGRAM_CHALLENGE.length },
+  { page: 'console', icon: Joystick, label: 'Photo Challenge : Consoles', total: CONSOLE_CHALLENGE.length },
+  { page: 'brain', icon: Brain, label: 'Brain Training : Trivia', total: BRAIN_TRAINING_CHALLENGE.length },
+  { page: 'vowels', icon: SpellCheck, label: 'Missing Vowels : Video Games', total: MISSING_VOWELS_CHALLENGE.length },
+];
+
+/** How many distinct in-range item numbers have a saved answer. */
+function countAnswered(rows: unknown[] | null, field: string, total: number): number {
+  const done = new Set<number>();
+  (rows || []).forEach(row => {
+    const n = (row as Record<string, number>)[field];
+    if (Number.isInteger(n) && n >= 1 && n <= total) done.add(n);
   });
+  return done.size;
+}
+
+export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Props) {
+  // Answered counts per challenge for the menu's progress fractions;
+  // null until the fetch completes (the fractions just don't show).
+  const [counts, setCounts] = useState<Record<ChallengeKey, number> | null>(null);
 
   useEffect(() => {
-    if (subpage === null) localStorage.removeItem('pubhunt_challenge_subpage');
-    else localStorage.setItem('pubhunt_challenge_subpage', subpage);
-  }, [subpage]);
+    // Refetch whenever the menu is shown so counts pick up answers
+    // submitted on a subpage the team just came back from.
+    if (subpage !== null) return;
+    let cancelled = false;
+    Promise.all([
+      supabase.rpc('get_team_photo_answers', { p_team_id: teamId }),
+      supabase.rpc('get_team_anagram_answers', { p_team_id: teamId }),
+      supabase.rpc('get_team_console_answers', { p_team_id: teamId }),
+      supabase.rpc('get_team_brain_training_answers', { p_team_id: teamId }),
+      supabase.rpc('get_team_missing_vowels_answers', { p_team_id: teamId }),
+    ]).then(([photo, anagram, consoles, brain, vowels]) => {
+      if (cancelled) return;
+      setCounts({
+        photo: countAnswered(photo.data, 'photo_number', PHOTO_CHALLENGE.length),
+        anagram: countAnswered(anagram.data, 'anagram_number', ANAGRAM_CHALLENGE.length),
+        console: countAnswered(consoles.data, 'console_number', CONSOLE_CHALLENGE.length),
+        brain: countAnswered(brain.data, 'question_number', BRAIN_TRAINING_CHALLENGE.length),
+        vowels: countAnswered(vowels.data, 'puzzle_number', MISSING_VOWELS_CHALLENGE.length),
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [teamId, subpage]);
 
   const openSubpage = (page: ChallengeSubpage) => {
     sfx.playClick();
-    setSubpage(page);
+    onSubpageChange(page);
   };
 
   if (subpage === 'photo') {
-    return <PhotoChallengePage teamId={teamId} onBack={() => setSubpage(null)} />;
+    return <PhotoChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'anagram') {
-    return <AnagramChallengePage teamId={teamId} onBack={() => setSubpage(null)} />;
+    return <AnagramChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'console') {
-    return <ConsoleChallengePage teamId={teamId} onBack={() => setSubpage(null)} />;
+    return <ConsoleChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'brain') {
-    return <BrainTrainingChallengePage teamId={teamId} onBack={() => setSubpage(null)} />;
+    return <BrainTrainingChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'vowels') {
-    return <MissingVowelsChallengePage teamId={teamId} onBack={() => setSubpage(null)} />;
+    return <MissingVowelsChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
   return (
@@ -109,45 +153,24 @@ export default function ChallengesPage({ teamId }: Props) {
         </a>
       </div>
 
-      <button
-        type="button"
-        className="btn btn-secondary btn-block btn-lg"
-        onClick={() => openSubpage('photo')}
-      >
-        <Gamepad2 size={18} /> Photo Challenge : Characters
-      </button>
-
-      <button
-        type="button"
-        className="btn btn-secondary btn-block btn-lg"
-        onClick={() => openSubpage('anagram')}
-      >
-        <Shuffle size={18} /> Anagram Challenge : Games
-      </button>
-
-      <button
-        type="button"
-        className="btn btn-secondary btn-block btn-lg"
-        onClick={() => openSubpage('console')}
-      >
-        <Joystick size={18} /> Photo Challenge : Consoles
-      </button>
-
-      <button
-        type="button"
-        className="btn btn-secondary btn-block btn-lg"
-        onClick={() => openSubpage('brain')}
-      >
-        <Brain size={18} /> Brain Training : Trivia
-      </button>
-
-      <button
-        type="button"
-        className="btn btn-secondary btn-block btn-lg"
-        onClick={() => openSubpage('vowels')}
-      >
-        <SpellCheck size={18} /> Missing Vowels : Video Games
-      </button>
+      {CHALLENGE_BUTTONS.map(({ page, icon: Icon, label, total }) => {
+        const done = counts?.[page];
+        const complete = done !== undefined && done >= total;
+        return (
+          <button
+            key={page}
+            type="button"
+            className={`btn ${complete ? 'btn-success' : 'btn-secondary'} btn-block btn-lg`}
+            style={{ justifyContent: 'space-between' }}
+            onClick={() => openSubpage(page)}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6em', whiteSpace: 'normal', textAlign: 'left' }}>
+              <Icon size={18} style={{ flexShrink: 0 }} /> {label}
+            </span>
+            {done !== undefined && <span className="btn-count">{done}/{total}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }
