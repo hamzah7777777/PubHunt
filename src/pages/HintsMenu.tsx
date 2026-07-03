@@ -31,7 +31,8 @@ export default function HintsMenu({ route, hints, onSelect }: Props) {
             onSelect(0);
           }}
         >
-          <span>Start — {START_POINT.name}</span>
+          <span>Start</span>
+          <span style={{ fontSize: 13 }}>{START_POINT.name}</span>
           <span style={{ fontSize: 12, opacity: 0.85 }}>{START_POINT.time}</span>
         </button>
 

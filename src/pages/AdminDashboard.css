@@ -104,6 +104,110 @@
 }
 .admin-btn-danger:hover { background: #fdecea; }
 
+/* ----------------------------------------------------------
+   SECTION TABS — switch between team admin and quiz marking.
+   ---------------------------------------------------------- */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-tab-active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+.admin-tab-active:hover { background: #333; }
+
+/* ----------------------------------------------------------
+   QUIZ MARKING — one card per team; each answer gets ✓ / ✗
+   buttons (tap again to unmark).
+   ---------------------------------------------------------- */
+.admin-quiz-card { cursor: default; }
+.admin-quiz-card:hover { border-color: #e1e3e7; }
+
+.admin-quiz-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.admin-quiz-row {
+  background: #fafbfc;
+  border: 1px solid #e1e3e7;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-quiz-question {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-quiz-question-text {
+  font-size: 13px;
+  color: #6b6f76;
+}
+
+.admin-quiz-answer-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-quiz-answer-text {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.admin-quiz-marks {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-mark-correct {
+  background: #e3f5e6;
+  border-color: #1c7c2a;
+  color: #1c7c2a;
+}
+.admin-mark-correct:hover { background: #d2eed7; }
+
+.admin-mark-wrong {
+  background: #fdecea;
+  border-color: #c0291c;
+  color: #c0291c;
+}
+.admin-mark-wrong:hover { background: #fbdcd8; }
+
+/* ----------------------------------------------------------
+   PHOTO MARKING — same card layout as quiz marking, plus a
+   thumbnail and the expected answer under each submission.
+   ---------------------------------------------------------- */
+.admin-photo-thumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e1e3e7;
+  flex-shrink: 0;
+}
+
+.admin-photo-expected {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1c7c2a;
+}
+
 .admin-error {
   background: #fdecea;
   color: #c0291c;
@@ -344,6 +448,11 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+  /* Quiz cards stack the answers under the team name at any width. */
+  .admin-quiz-card {
+    flex-direction: column;
+    align-items: stretch;
   }
   .admin-card-meta { flex-wrap: nowrap; }
 
