@@ -15,12 +15,14 @@ import type {
   MissingVowelsAnswer,
   PhotoAnswer,
   QuizAnswer,
+  TeamClashAnswer,
 } from '../types';
 
-export const SECTION_KEYS = ['quiz', 'photos', 'anagrams', 'consoles', 'brain', 'vowels'] as const;
+export const SECTION_KEYS = ['clash', 'quiz', 'photos', 'anagrams', 'consoles', 'brain', 'vowels'] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export const SECTION_LABELS: Record<SectionKey, string> = {
+  clash: 'Team Clash',
   quiz: 'Pub Quiz',
   photos: 'Photo Challenge : Characters',
   anagrams: 'Anagram Challenge',
@@ -31,6 +33,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 
 // Compact names for the score table's column headers.
 export const SECTION_SHORT_LABELS: Record<SectionKey, string> = {
+  clash: 'Clash',
   quiz: 'Quiz',
   photos: 'Characters',
   anagrams: 'Anagrams',
@@ -40,7 +43,10 @@ export const SECTION_SHORT_LABELS: Record<SectionKey, string> = {
 };
 
 // Photo answers are worth 2 (character + game); everything else is 1 each.
-export const SECTION_MAX: Record<SectionKey, number> = {
+// Team clash has no fixed max — it's one point per other team on the route,
+// which varies — so it's null and the table shows no denominator for it.
+export const SECTION_MAX: Record<SectionKey, number | null> = {
+  clash: null,
   quiz: QUIZ_COUNT * QUESTIONS_PER_QUIZ,
   photos: PHOTO_CHALLENGE.length * 2,
   anagrams: ANAGRAM_CHALLENGE.length,
@@ -49,9 +55,8 @@ export const SECTION_MAX: Record<SectionKey, number> = {
   vowels: MISSING_VOWELS_CHALLENGE.length,
 };
 
-export const TOTAL_MAX = SECTION_KEYS.reduce((sum, key) => sum + SECTION_MAX[key], 0);
-
 export interface AnswerSets {
+  clash: TeamClashAnswer[];
   quiz: QuizAnswer[];
   photos: PhotoAnswer[];
   anagrams: AnagramAnswer[];
@@ -63,6 +68,7 @@ export interface AnswerSets {
 export type TeamScores = Record<SectionKey, number> & { total: number };
 
 export function computeTeamScores(teamId: string, answers: AnswerSets): TeamScores {
+  const clash = answers.clash.filter(a => a.team_id === teamId && a.is_correct === true).length;
   const quiz = answers.quiz.filter(a => a.team_id === teamId && a.is_correct === true).length;
   const photos = answers.photos.reduce(
     (sum, a) =>
@@ -76,13 +82,14 @@ export function computeTeamScores(teamId: string, answers: AnswerSets): TeamScor
   const brain = answers.brain.filter(a => a.team_id === teamId && a.is_correct === true).length;
   const vowels = answers.vowels.filter(a => a.team_id === teamId && a.is_correct === true).length;
   return {
+    clash,
     quiz,
     photos,
     anagrams,
     consoles,
     brain,
     vowels,
-    total: quiz + photos + anagrams + consoles + brain + vowels,
+    total: clash + quiz + photos + anagrams + consoles + brain + vowels,
   };
 }
 

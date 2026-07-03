@@ -512,6 +512,34 @@ p {
 .panel-dark p { color: rgba(255,255,255,0.85); }
 
 /* ----------------------------------------------------------
+   GAME MODAL — popup over the phone screen (team clash answers)
+   ---------------------------------------------------------- */
+.game-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.game-modal {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.game-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+/* ----------------------------------------------------------
    STATUS BADGES / ALERTS
    ---------------------------------------------------------- */
 .badge {
@@ -598,6 +626,21 @@ p {
   display: block;
   margin-top: 4px;
 }
+/* Green badge on a cover tile once its answer is submitted */
+.cover-tile-done {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1c7c2a;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .cover-tile-name {
   flex-shrink: 0;
   padding: 4px 6px;

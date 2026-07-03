@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Brain, Camera, Gamepad2, Joystick, Shuffle, SpellCheck } from 'lucide-react';
+import { Brain, Camera, Gamepad2, Joystick, Shuffle, SpellCheck, Swords } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import TeamClashChallengePage from './TeamClashChallengePage';
 import PhotoChallengePage from './PhotoChallengePage';
 import AnagramChallengePage from './AnagramChallengePage';
 import ConsoleChallengePage from './ConsoleChallengePage';
@@ -19,7 +20,7 @@ const facebookIcon = (
   </svg>
 );
 
-export type ChallengeSubpage = 'photo' | 'anagram' | 'console' | 'brain' | 'vowels' | null;
+export type ChallengeSubpage = 'clash' | 'photo' | 'anagram' | 'console' | 'brain' | 'vowels' | null;
 
 interface Props {
   teamId: string;
@@ -51,6 +52,8 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
   // Answered counts per challenge for the menu's progress fractions;
   // null until the fetch completes (the fractions just don't show).
   const [counts, setCounts] = useState<Record<ChallengeKey, number> | null>(null);
+  // Team clash total is dynamic: the number of other teams on the route.
+  const [clashTotal, setClashTotal] = useState(0);
 
   useEffect(() => {
     // Refetch whenever the menu is shown so counts pick up answers
@@ -63,9 +66,20 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
       supabase.rpc('get_team_console_answers', { p_team_id: teamId }),
       supabase.rpc('get_team_brain_training_answers', { p_team_id: teamId }),
       supabase.rpc('get_team_missing_vowels_answers', { p_team_id: teamId }),
-    ]).then(([photo, anagram, consoles, brain, vowels]) => {
+      supabase.rpc('get_clash_targets', { p_team_id: teamId }),
+      supabase.rpc('get_team_clash_answers', { p_team_id: teamId }),
+    ]).then(([photo, anagram, consoles, brain, vowels, clashTargets, clashAnswers]) => {
       if (cancelled) return;
+      const targetIds = new Set<string>(
+        ((clashTargets.data as { team_id: string }[] | null) || []).map(t => t.team_id)
+      );
+      const clashDone = new Set<string>();
+      ((clashAnswers.data as { target_team_id: string }[] | null) || []).forEach(row => {
+        if (targetIds.has(row.target_team_id)) clashDone.add(row.target_team_id);
+      });
+      setClashTotal(targetIds.size);
       setCounts({
+        clash: clashDone.size,
         photo: countAnswered(photo.data, 'photo_number', PHOTO_CHALLENGE.length),
         anagram: countAnswered(anagram.data, 'anagram_number', ANAGRAM_CHALLENGE.length),
         console: countAnswered(consoles.data, 'console_number', CONSOLE_CHALLENGE.length),
@@ -82,6 +96,10 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
     sfx.playClick();
     onSubpageChange(page);
   };
+
+  if (subpage === 'clash') {
+    return <TeamClashChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+  }
 
   if (subpage === 'photo') {
     return <PhotoChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
@@ -103,6 +121,9 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
     return <MissingVowelsChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
   }
 
+  const clashDone = counts?.clash;
+  const clashComplete = clashDone !== undefined && clashTotal > 0 && clashDone >= clashTotal;
+
   return (
     <div className="flex flex-col gap-24 scale-up-anim">
       <div className="panel panel-dark text-center" style={{ padding: '32px 24px' }}>
@@ -113,6 +134,18 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
           <span>Extra points for creativity!</span>
         </div>
       </div>
+
+      <button
+        type="button"
+        className={`btn ${clashComplete ? 'btn-success' : 'btn-primary'} btn-block btn-lg`}
+        style={{ justifyContent: 'space-between', minHeight: 72 }}
+        onClick={() => openSubpage('clash')}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6em', whiteSpace: 'normal', textAlign: 'left' }}>
+          <Swords size={20} style={{ flexShrink: 0 }} /> Team Clash : Name Your Rivals
+        </span>
+        {clashDone !== undefined && <span className="btn-count">{clashDone}/{clashTotal}</span>}
+      </button>
 
       <div className="panel">
         <div className="flex flex-col gap-12" style={{ marginBottom: 16 }}>

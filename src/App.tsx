@@ -61,7 +61,7 @@ export default function App() {
   // shouldn't kick the team back to the menu if they were mid challenge.
   const [challengeSubpage, setChallengeSubpage] = useState<ChallengeSubpage>(() => {
     const saved = localStorage.getItem('pubhunt_challenge_subpage');
-    return saved === 'photo' || saved === 'anagram' || saved === 'console' || saved === 'brain' || saved === 'vowels'
+    return saved === 'clash' || saved === 'photo' || saved === 'anagram' || saved === 'console' || saved === 'brain' || saved === 'vowels'
       ? saved
       : null;
   });

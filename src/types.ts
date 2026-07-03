@@ -81,6 +81,15 @@ export interface MissingVowelsAnswer {
   submitted_at: string;
 }
 
+export interface TeamClashAnswer {
+  id: string;
+  team_id: string;
+  target_team_id: string;
+  answer: string;
+  is_correct: boolean | null;
+  submitted_at: string;
+}
+
 export interface AdminParticipant {
   id: string;
   team_id: string;

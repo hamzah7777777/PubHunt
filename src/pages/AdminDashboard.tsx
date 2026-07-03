@@ -7,7 +7,6 @@ import {
   SECTION_LABELS,
   SECTION_MAX,
   SECTION_SHORT_LABELS,
-  TOTAL_MAX,
   computeTeamScores,
   withRanks,
   type AnswerSets,
@@ -22,6 +21,7 @@ import type {
   MissingVowelsAnswer,
   PhotoAnswer,
   QuizAnswer,
+  TeamClashAnswer,
 } from '../types';
 import './AdminDashboard.css';
 
@@ -69,6 +69,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [consoleAnswers, setConsoleAnswers] = useState<ConsoleAnswer[]>([]);
   const [brainAnswers, setBrainAnswers] = useState<BrainTrainingAnswer[]>([]);
   const [vowelsAnswers, setVowelsAnswers] = useState<MissingVowelsAnswer[]>([]);
+  const [clashAnswers, setClashAnswers] = useState<TeamClashAnswer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
@@ -78,7 +79,7 @@ export default function AdminDashboard({ onLogout }: Props) {
 
   useEffect(() => {
     (async () => {
-      const [teamsRes, participantsRes, quizRes, photoRes, anagramRes, consoleRes, brainRes, vowelsRes] =
+      const [teamsRes, participantsRes, quizRes, photoRes, anagramRes, consoleRes, brainRes, vowelsRes, clashRes] =
         await Promise.all([
           supabase.from('teams').select('*').order('name'),
           supabase.from('participants').select('*').order('row_order'),
@@ -88,6 +89,7 @@ export default function AdminDashboard({ onLogout }: Props) {
           supabase.from('console_answers').select('*').order('console_number'),
           supabase.from('brain_training_answers').select('*').order('question_number'),
           supabase.from('missing_vowels_answers').select('*').order('puzzle_number'),
+          supabase.from('team_clash_answers').select('*').order('submitted_at'),
         ]);
 
       if (
@@ -98,7 +100,8 @@ export default function AdminDashboard({ onLogout }: Props) {
         anagramRes.error ||
         consoleRes.error ||
         brainRes.error ||
-        vowelsRes.error
+        vowelsRes.error ||
+        clashRes.error
       ) {
         setError(
           teamsRes.error?.message ||
@@ -109,6 +112,7 @@ export default function AdminDashboard({ onLogout }: Props) {
             consoleRes.error?.message ||
             brainRes.error?.message ||
             vowelsRes.error?.message ||
+            clashRes.error?.message ||
             'Failed to load data'
         );
       } else {
@@ -120,6 +124,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         setConsoleAnswers((consoleRes.data as ConsoleAnswer[]) || []);
         setBrainAnswers((brainRes.data as BrainTrainingAnswer[]) || []);
         setVowelsAnswers((vowelsRes.data as MissingVowelsAnswer[]) || []);
+        setClashAnswers((clashRes.data as TeamClashAnswer[]) || []);
       }
       setLoading(false);
     })();
@@ -281,6 +286,17 @@ export default function AdminDashboard({ onLogout }: Props) {
   };
 
   // Clicking the already-active mark clears it back to unmarked.
+  const markClashAnswer = async (answer: TeamClashAnswer, value: boolean) => {
+    const next = answer.is_correct === value ? null : value;
+    setClashAnswers(prev => prev.map(a => (a.id === answer.id ? { ...a, is_correct: next } : a)));
+    const { error: markError } = await supabase
+      .from('team_clash_answers')
+      .update({ is_correct: next })
+      .eq('id', answer.id);
+    if (markError) setError(markError.message);
+  };
+
+  // Clicking the already-active mark clears it back to unmarked.
   const markAnagramAnswer = async (answer: AnagramAnswer, value: boolean) => {
     const next = answer.is_correct === value ? null : value;
     setAnagramAnswers(prev => prev.map(a => (a.id === answer.id ? { ...a, is_correct: next } : a)));
@@ -301,6 +317,7 @@ export default function AdminDashboard({ onLogout }: Props) {
     : [];
 
   const answerSets: AnswerSets = {
+    clash: clashAnswers,
     quiz: quizAnswers,
     photos: photoAnswers,
     anagrams: anagramAnswers,
@@ -310,6 +327,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   };
 
   const unmarkedCount =
+    clashAnswers.filter(a => a.is_correct === null).length +
     quizAnswers.filter(a => a.is_correct === null).length +
     photoAnswers.filter(a => a.character_correct === null).length +
     photoAnswers.filter(a => a.game_correct === null).length +
@@ -352,12 +370,14 @@ export default function AdminDashboard({ onLogout }: Props) {
         {page === 'marking' ? (
           <AdminMarkingPage
             teams={teams}
+            clashAnswers={clashAnswers}
             quizAnswers={quizAnswers}
             photoAnswers={photoAnswers}
             anagramAnswers={anagramAnswers}
             consoleAnswers={consoleAnswers}
             brainAnswers={brainAnswers}
             vowelsAnswers={vowelsAnswers}
+            onMarkClash={markClashAnswer}
             onMarkQuiz={markAnswer}
             onMarkPhoto={markPhotoAnswer}
             onMarkAnagram={markAnagramAnswer}
@@ -455,12 +475,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                         {SECTION_KEYS.map(key => (
                           <th key={key}>
                             {SECTION_SHORT_LABELS[key]}
-                            <span className="admin-score-max"> /{SECTION_MAX[key]}</span>
+                            {SECTION_MAX[key] !== null && (
+                              <span className="admin-score-max"> /{SECTION_MAX[key]}</span>
+                            )}
                           </th>
                         ))}
-                        <th>
-                          Total<span className="admin-score-max"> /{TOTAL_MAX}</span>
-                        </th>
+                        <th>Total</th>
                       </tr>
                     </thead>
                     <tbody>

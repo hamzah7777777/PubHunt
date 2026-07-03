@@ -14,11 +14,13 @@ import type {
   MissingVowelsAnswer,
   PhotoAnswer,
   QuizAnswer,
+  TeamClashAnswer,
 } from '../types';
 
-type MarkingSection = 'quiz' | 'photos' | 'anagrams' | 'consoles' | 'brain' | 'vowels';
+type MarkingSection = 'clash' | 'quiz' | 'photos' | 'anagrams' | 'consoles' | 'brain' | 'vowels';
 
 const TABS: { id: MarkingSection; label: string }[] = [
+  { id: 'clash', label: 'Team Clash' },
   { id: 'quiz', label: 'Quiz' },
   { id: 'photos', label: 'Characters' },
   { id: 'anagrams', label: 'Anagrams' },
@@ -29,12 +31,14 @@ const TABS: { id: MarkingSection; label: string }[] = [
 
 interface Props {
   teams: AdminTeam[];
+  clashAnswers: TeamClashAnswer[];
   quizAnswers: QuizAnswer[];
   photoAnswers: PhotoAnswer[];
   anagramAnswers: AnagramAnswer[];
   consoleAnswers: ConsoleAnswer[];
   brainAnswers: BrainTrainingAnswer[];
   vowelsAnswers: MissingVowelsAnswer[];
+  onMarkClash: (answer: TeamClashAnswer, value: boolean) => void;
   onMarkQuiz: (answer: QuizAnswer, value: boolean) => void;
   onMarkPhoto: (answer: PhotoAnswer, field: 'character_correct' | 'game_correct', value: boolean) => void;
   onMarkAnagram: (answer: AnagramAnswer, value: boolean) => void;
@@ -46,12 +50,14 @@ interface Props {
 
 export default function AdminMarkingPage({
   teams,
+  clashAnswers,
   quizAnswers,
   photoAnswers,
   anagramAnswers,
   consoleAnswers,
   brainAnswers,
   vowelsAnswers,
+  onMarkClash,
   onMarkQuiz,
   onMarkPhoto,
   onMarkAnagram,
@@ -60,10 +66,15 @@ export default function AdminMarkingPage({
   onMarkVowels,
   onBack,
 }: Props) {
-  const [section, setSection] = useState<MarkingSection>('quiz');
+  const [section, setSection] = useState<MarkingSection>('clash');
+
+  // The rival a clash answer points at: its theme is shown on the row and
+  // its real name is the expected answer.
+  const teamById = new Map(teams.map(t => [t.id, t]));
 
   // Unmarked counts shown on each tab so hosts can see what's left.
   const unmarked: Record<MarkingSection, number> = {
+    clash: clashAnswers.filter(a => a.is_correct === null).length,
     quiz: quizAnswers.filter(a => a.is_correct === null).length,
     photos: photoAnswers.filter(a => a.character_correct === null || a.game_correct === null).length,
     anagrams: anagramAnswers.filter(a => a.is_correct === null).length,
@@ -93,6 +104,73 @@ export default function AdminMarkingPage({
           </button>
         ))}
       </div>
+
+      {section === 'clash' && (
+        <>
+          <div className="admin-toolbar">
+            <span className="admin-stats">
+              {clashAnswers.length} answers · {unmarked.clash} unmarked
+            </span>
+          </div>
+
+          {clashAnswers.length === 0 && (
+            <p className="admin-empty-roster">No team clash answers submitted yet.</p>
+          )}
+
+          <div className="admin-team-list">
+            {teams.map(team => {
+              const teamAnswers = clashAnswers.filter(a => a.team_id === team.id);
+              if (teamAnswers.length === 0) return null;
+              const correct = teamAnswers.filter(a => a.is_correct === true).length;
+              return (
+                <div key={team.id} className="admin-team-card admin-quiz-card">
+                  <div className="admin-card-main">
+                    <span className="admin-card-name">{team.name}</span>
+                    <span className="admin-card-theme">
+                      {correct}/{teamAnswers.length} correct
+                    </span>
+                  </div>
+                  <div className="admin-quiz-answers">
+                    {teamAnswers.map(a => {
+                      const target = teamById.get(a.target_team_id);
+                      return (
+                        <div key={a.id} className="admin-quiz-row">
+                          <div className="admin-quiz-question">
+                            <span className="admin-chip">{target?.game_theme ?? 'Unknown cover'}</span>
+                            <span className="admin-quiz-question-text">Who is this team?</span>
+                          </div>
+                          <div className="admin-quiz-answer-line">
+                            <span className="admin-quiz-answer-text">
+                              {a.answer}
+                              <span className="admin-photo-expected">Team: {target?.name ?? '?'}</span>
+                            </span>
+                            <div className="admin-quiz-marks">
+                              <button
+                                className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === true ? 'admin-mark-correct' : ''}`}
+                                onClick={() => onMarkClash(a, true)}
+                                aria-label="Mark correct"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                className={`admin-btn admin-btn-icon admin-mark-btn ${a.is_correct === false ? 'admin-mark-wrong' : ''}`}
+                                onClick={() => onMarkClash(a, false)}
+                                aria-label="Mark incorrect"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {section === 'quiz' && (
         <>
