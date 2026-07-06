@@ -43,7 +43,7 @@ export const SECTION_SHORT_LABELS: Record<SectionKey, string> = {
 };
 
 // Photo answers are worth 2 (character + game); everything else is 1 each.
-// Team clash has no fixed max — it's one point per other team on the route,
+// Team clash has no fixed max — it's one point per other team (both routes),
 // which varies — so it's null and the table shows no denominator for it.
 export const SECTION_MAX: Record<SectionKey, number | null> = {
   clash: null,

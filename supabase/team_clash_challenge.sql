@@ -1,7 +1,7 @@
 -- PubHunt team clash challenge: per-team rival-name answers + marking.
 -- Run this in the Supabase SQL editor (after schema.sql).
 --
--- Teams see the cover/theme of every other team on their route and must
+-- Teams see the cover/theme of every other team (both routes) and must
 -- find out (in the pubs!) what that team is actually called. Each guess is
 -- submitted per rival team (resubmitting overwrites and clears any existing
 -- mark). Admins mark each answer: 1 point per correct team name.
@@ -41,9 +41,9 @@ create policy "admins full access to team_clash_answers"
 -- NOTE: like the rest of the app, these trust the team_id the client holds
 -- after PIN login (stored in localStorage) rather than re-verifying the PIN.
 
--- The rival teams a team has to identify: everyone else on their route
--- (withdrawn teams excluded). Only the cover theme is exposed — the team
--- name is the answer, and anon's teams grant doesn't include route.
+-- The rival teams a team has to identify: every other team across both
+-- routes (withdrawn teams excluded). Only the cover theme is exposed — the
+-- team name is the answer.
 drop function if exists get_clash_targets(uuid);
 create or replace function get_clash_targets(p_team_id uuid)
 returns table (
@@ -56,8 +56,7 @@ set search_path = public
 as $$
   select t.id, t.game_theme
   from teams t
-  where t.route = (select route from teams where id = p_team_id)
-    and t.id <> p_team_id
+  where t.id <> p_team_id
     and t.status <> 'withdrawn'
   order by t.game_theme;
 $$;

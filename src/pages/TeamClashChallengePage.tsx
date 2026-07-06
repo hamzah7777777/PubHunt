@@ -107,7 +107,7 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
         <h1 style={{ color: 'var(--color-white)', fontSize: 32, marginBottom: 8 }}>TEAM CLASH</h1>
         <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, marginBottom: 0 }}>
           <Swords size={16} style={{ verticalAlign: 'text-bottom' }} /> Find out the team name of every
-          other team on your route. Tap a cover and enter their name. 1 point each!
+          other team &mdash; on both routes. Tap a cover and enter their name. 1 point each!
         </p>
         {!loading && (
           <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 8, marginBottom: 0 }}>
@@ -125,7 +125,7 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
       {loading ? (
         <p style={{ color: 'var(--color-body-subtle)' }}>Loading teams…</p>
       ) : targets.length === 0 ? (
-        <p style={{ color: 'var(--color-body-subtle)' }}>No other teams on your route yet.</p>
+        <p style={{ color: 'var(--color-body-subtle)' }}>No other teams yet.</p>
       ) : (
         <div className="cover-grid">
           {targets.map(t => (

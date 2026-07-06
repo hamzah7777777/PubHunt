@@ -52,7 +52,7 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
   // Answered counts per challenge for the menu's progress fractions;
   // null until the fetch completes (the fractions just don't show).
   const [counts, setCounts] = useState<Record<ChallengeKey, number> | null>(null);
-  // Team clash total is dynamic: the number of other teams on the route.
+  // Team clash total is dynamic: the number of other teams across both routes.
   const [clashTotal, setClashTotal] = useState(0);
 
   useEffect(() => {
