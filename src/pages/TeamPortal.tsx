@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Gamepad2, Map, Users } from 'lucide-react';
+import InstructionsPanel from '../components/InstructionsPanel';
 import type { TeamSession } from '../types';
 
 interface Props {
@@ -18,7 +19,6 @@ export default function TeamPortal({ session, onLogout }: Props) {
   const members = session.participants.filter(p => p.role !== 'captain');
   const totalMembers = members.length + (captain ? 1 : 0);
 
-  const [showInstructions, setShowInstructions] = useState(false);
   const [showTeamName, setShowTeamName] = useState(false);
   const [showPin, setShowPin] = useState(false);
 
@@ -94,33 +94,7 @@ export default function TeamPortal({ session, onLogout }: Props) {
         </div>
       </div>
 
-      <div className="panel panel-secondary">
-        <button
-          type="button"
-          className="btn btn-outline"
-          style={{ width: '100%' }}
-          onClick={() => setShowInstructions(prev => !prev)}
-        >
-          Instructions
-        </button>
-
-        {showInstructions && (
-          <div style={{ marginTop: 16, textAlign: 'left' }}>
-            <h3 style={{ marginBottom: 12 }}>Instructions (please read carefully)</h3>
-            <ol style={{ paddingLeft: 20, margin: 0, lineHeight: 1.75 }}>
-              <li>Follow the clues to each pub in order, then head to the final venue (wristbands required).</li>
-              <li>Please visit all pubs on your route &mdash; we need to maintain good relationships with them to keep Pub Hunt running in future.</li>
-              <li>Complete the en-route video and photo challenges.</li>
-              <li>Answer the questions for each pub along the way in the Hints tab.</li>
-              <li>Complete the video game quiz (5 rounds), plus the Team Name Quiz &mdash; find out all other teams&rsquo; names and match them to the correct picture when submitting.</li>
-              <li>Remember to eat along the way.</li>
-              <li>Enjoy yourselves (within reason).</li>
-              <li>You&rsquo;ll visit four pubs in total, then the final venue. Please follow the suggested timings in the Hints tab.</li>
-              <li>We have private hire of the venue from 10:00pm. Entry is Pub Hunt wristband only &mdash; please don&rsquo;t arrive before 10:00pm.</li>
-            </ol>
-          </div>
-        )}
-      </div>
+      <InstructionsPanel />
 
       {session.pin && (
         <div className="panel panel-secondary">

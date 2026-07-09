@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ClipboardCheck, Download, LogOut, Plus, QrCode, Trash2, X } from 'lucide-react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { ClipboardCheck, Download, LogOut, Plus, QrCode, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
@@ -19,6 +19,7 @@ import type {
   AnagramAnswer,
   BrainTrainingAnswer,
   ConsoleAnswer,
+  FacebookMark,
   MissingVowelsAnswer,
   PhotoAnswer,
   QuizAnswer,
@@ -44,6 +45,7 @@ function LeaderboardList({ rows }: { rows: { rank: number; name: string; points:
   if (rows.length === 0) {
     return <p className="admin-empty-roster">No points scored yet.</p>;
   }
+  const max = Math.max(...rows.map(r => r.points));
   return (
     <ol className="admin-lb-list">
       {rows.map(r => (
@@ -51,7 +53,15 @@ function LeaderboardList({ rows }: { rows: { rank: number; name: string; points:
           <span className={`admin-lb-rank ${r.rank <= 3 ? `admin-lb-rank-${r.rank}` : ''}`}>
             {r.rank}
           </span>
-          <span className="admin-lb-name">{r.name}</span>
+          <span className="admin-lb-main">
+            <span className="admin-lb-name">{r.name}</span>
+            <span className="admin-lb-bar-track">
+              <span
+                className={`admin-lb-bar ${r.rank <= 3 ? `admin-lb-bar-${r.rank}` : ''}`}
+                style={{ width: `${max > 0 ? Math.max(4, (r.points / max) * 100) : 0}%` }}
+              />
+            </span>
+          </span>
           <span className="admin-lb-points">
             {r.points} pt{r.points === 1 ? '' : 's'}
           </span>
@@ -71,16 +81,18 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [brainAnswers, setBrainAnswers] = useState<BrainTrainingAnswer[]>([]);
   const [vowelsAnswers, setVowelsAnswers] = useState<MissingVowelsAnswer[]>([]);
   const [clashAnswers, setClashAnswers] = useState<TeamClashAnswer[]>([]);
+  const [facebookMarks, setFacebookMarks] = useState<FacebookMark[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   // All the marking lives on its own page; the dashboard has the rest.
   const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
   const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'qr'>('teams');
+  const [teamQuery, setTeamQuery] = useState('');
 
   useEffect(() => {
     (async () => {
-      const [teamsRes, participantsRes, quizRes, photoRes, anagramRes, consoleRes, brainRes, vowelsRes, clashRes] =
+      const [teamsRes, participantsRes, quizRes, photoRes, anagramRes, consoleRes, brainRes, vowelsRes, clashRes, facebookRes] =
         await Promise.all([
           supabase.from('teams').select('*').order('name'),
           supabase.from('participants').select('*').order('row_order'),
@@ -91,6 +103,7 @@ export default function AdminDashboard({ onLogout }: Props) {
           supabase.from('brain_training_answers').select('*').order('question_number'),
           supabase.from('missing_vowels_answers').select('*').order('puzzle_number'),
           supabase.from('team_clash_answers').select('*').order('submitted_at'),
+          supabase.from('facebook_marks').select('*'),
         ]);
 
       if (
@@ -126,6 +139,10 @@ export default function AdminDashboard({ onLogout }: Props) {
         setBrainAnswers((brainRes.data as BrainTrainingAnswer[]) || []);
         setVowelsAnswers((vowelsRes.data as MissingVowelsAnswer[]) || []);
         setClashAnswers((clashRes.data as TeamClashAnswer[]) || []);
+        // Tolerated separately: errors (e.g. facebook_challenge.sql not run
+        // yet) just leave the Facebook tab unmarked instead of blocking the
+        // whole dashboard.
+        setFacebookMarks(facebookRes.error ? [] : ((facebookRes.data as FacebookMark[]) || []));
       }
       setLoading(false);
     })();
@@ -139,6 +156,74 @@ export default function AdminDashboard({ onLogout }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [editingTeamId]);
+
+  // Live sync: several hosts mark at once, so answer-table changes (marks
+  // from co-hosts and fresh team submissions) are pushed to every open
+  // dashboard. With "Unmarked only" on, a question a co-host just marked
+  // drops off your list before you can double-mark it. Needs the tables in
+  // the supabase_realtime publication — see supabase/realtime.sql.
+  useEffect(() => {
+    function apply<T extends { id: string }>(
+      set: Dispatch<SetStateAction<T[]>>,
+      sort: (a: T, b: T) => number
+    ) {
+      return (payload: { eventType: string; new: unknown; old: unknown }) => {
+        set(prev => {
+          if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as { id?: string }).id;
+            return prev.filter(r => r.id !== oldId);
+          }
+          const row = payload.new as T;
+          return [...prev.filter(r => r.id !== row.id), row].sort(sort);
+        });
+      };
+    }
+    const byNumber =
+      <T,>(...keys: (keyof T)[]) =>
+      (a: T, b: T) => {
+        for (const k of keys) {
+          const diff = (a[k] as number) - (b[k] as number);
+          if (diff !== 0) return diff;
+        }
+        return 0;
+      };
+    const bySubmitted = (a: { submitted_at: string }, b: { submitted_at: string }) =>
+      a.submitted_at < b.submitted_at ? -1 : a.submitted_at > b.submitted_at ? 1 : 0;
+
+    const channel = supabase
+      .channel('admin-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_answers' },
+        apply(setQuizAnswers, byNumber('quiz_number', 'question_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'photo_answers' },
+        apply(setPhotoAnswers, byNumber('photo_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'anagram_answers' },
+        apply(setAnagramAnswers, byNumber('anagram_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'console_answers' },
+        apply(setConsoleAnswers, byNumber('console_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brain_training_answers' },
+        apply(setBrainAnswers, byNumber('question_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'missing_vowels_answers' },
+        apply(setVowelsAnswers, byNumber('puzzle_number')))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_clash_answers' },
+        apply(setClashAnswers, bySubmitted))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'facebook_marks' }, payload => {
+        // Deduped by team_id (one row per team), not id, so a co-host's
+        // insert can't sit alongside our own copy of the same team's row.
+        setFacebookMarks(prev => {
+          if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as { id?: string }).id;
+            return prev.filter(m => m.id !== oldId);
+          }
+          const row = payload.new as FacebookMark;
+          return [...prev.filter(m => m.team_id !== row.team_id), row];
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -244,6 +329,27 @@ export default function AdminDashboard({ onLogout }: Props) {
       return;
     }
     setParticipants(prev => [...prev, data as AdminParticipant]);
+  };
+
+  // Facebook uploads are marked per team (yes/no per item); rows are
+  // created lazily on first mark. Clicking the active mark clears it.
+  const markFacebook = async (
+    teamId: string,
+    field: 'team_photo' | 'selection_video' | 'scene_video',
+    value: boolean
+  ) => {
+    const existing = facebookMarks.find(m => m.team_id === teamId);
+    const next = existing?.[field] === value ? null : value;
+    const { data, error: markError } = await supabase
+      .from('facebook_marks')
+      .upsert({ team_id: teamId, [field]: next }, { onConflict: 'team_id' })
+      .select()
+      .single();
+    if (markError || !data) {
+      setError(markError?.message || 'Failed to save the Facebook mark. Has facebook_challenge.sql been run?');
+      return;
+    }
+    setFacebookMarks(prev => [...prev.filter(m => m.team_id !== teamId), data as FacebookMark]);
   };
 
   // Clicking the already-active mark clears it back to unmarked.
@@ -409,6 +515,8 @@ export default function AdminDashboard({ onLogout }: Props) {
             consoleAnswers={consoleAnswers}
             brainAnswers={brainAnswers}
             vowelsAnswers={vowelsAnswers}
+            facebookMarks={facebookMarks}
+            onMarkFacebook={markFacebook}
             onMarkClash={markClashAnswer}
             onMarkQuiz={markAnswer}
             onMarkPhoto={markPhotoAnswer}
@@ -452,7 +560,10 @@ export default function AdminDashboard({ onLogout }: Props) {
               <>
                 <div className="admin-toolbar">
                   <span className="admin-stats">
-                    {teams.length} teams · {participants.length} participants
+                    {teams.length} teams · {participants.length} participants ·{' '}
+                    {teams.filter(t => t.status === 'confirmed').length} confirmed
+                    {teams.some(t => t.status === 'withdrawn') &&
+                      ` · ${teams.filter(t => t.status === 'withdrawn').length} withdrawn`}
                   </span>
                   <div className="admin-toolbar-actions">
                     <button className="admin-btn" onClick={exportTeamsCsv}>
@@ -464,8 +575,30 @@ export default function AdminDashboard({ onLogout }: Props) {
                   </div>
                 </div>
 
+                <div className="admin-search-wrap">
+                  <Search size={16} className="admin-search-icon" aria-hidden />
+                  <input
+                    type="search"
+                    className="admin-field admin-search"
+                    placeholder="Search teams by name, theme or PIN…"
+                    value={teamQuery}
+                    onChange={e => setTeamQuery(e.target.value)}
+                    aria-label="Search teams"
+                  />
+                </div>
+
                 <div className="admin-team-list">
-                  {teams.map(team => {
+                  {teams
+                    .filter(team => {
+                      const q = teamQuery.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        team.name.toLowerCase().includes(q) ||
+                        team.game_theme.toLowerCase().includes(q) ||
+                        team.pin.includes(q)
+                      );
+                    })
+                    .map(team => {
                     const memberCount = participants.filter(p => p.team_id === team.id).length;
                     return (
                       <button
@@ -523,7 +656,11 @@ export default function AdminDashboard({ onLogout }: Props) {
                     <tbody>
                       {scoreRows.map(({ team, scores, rank }) => (
                         <tr key={team.id}>
-                          <td className="admin-score-rank">{rank}</td>
+                          <td className="admin-score-rank">
+                            <span className={`admin-lb-rank ${rank <= 3 && scores.total > 0 ? `admin-lb-rank-${rank}` : ''}`}>
+                              {rank}
+                            </span>
+                          </td>
                           <td className="admin-score-team">{team.name}</td>
                           {SECTION_KEYS.map(key => (
                             <td key={key}>{scores[key]}</td>

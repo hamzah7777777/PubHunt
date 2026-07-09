@@ -141,8 +141,16 @@
   min-height: 40px;
   cursor: pointer;
   color: #1a1a1a;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
 }
 .admin-btn:hover { background: #f0f1f3; }
+
+.admin-dashboard button:focus-visible,
+.admin-dashboard input:focus-visible,
+.admin-dashboard select:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
 
 .admin-btn-primary {
   background: #1a1a1a;
@@ -169,19 +177,78 @@
 .admin-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 12px;
 }
 
 /* The Marking button sits apart from the section tabs. */
 .admin-marking-link { margin-left: auto; }
 
+.admin-tab {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 500;
+  color: #444;
+}
+.admin-tab:hover { background: #e9ebee; }
+
 .admin-tab-active {
   background: #1a1a1a;
   color: #fff;
   border-color: #1a1a1a;
 }
-.admin-tab-active:hover { background: #333; }
+.admin-tab-active:hover { background: #333; color: #fff; }
+
+/* Marking tabs: one horizontally scrollable row so they never stack three
+   deep on a phone. */
+.admin-marking-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-marking-tabs .admin-tab { white-space: nowrap; flex-shrink: 0; }
+
+.admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #c0291c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.admin-filter-on {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+.admin-filter-on:hover { background: #333; }
+
+/* ----------------------------------------------------------
+   TEAM SEARCH
+   ---------------------------------------------------------- */
+.admin-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.admin-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b6f76;
+  pointer-events: none;
+}
+
+.admin-field.admin-search { padding-left: 38px; }
 
 /* ----------------------------------------------------------
    QUIZ MARKING — one card per team; each answer gets ✓ / ✗
@@ -237,19 +304,36 @@
   gap: 6px;
 }
 
-.admin-mark-correct {
-  background: #e3f5e6;
-  border-color: #1c7c2a;
-  color: #1c7c2a;
+/* Bigger tap targets for rapid one-thumb marking at the venue. */
+.admin-mark-btn {
+  min-width: 44px;
+  min-height: 44px;
+  color: #6b6f76;
 }
-.admin-mark-correct:hover { background: #d2eed7; }
+
+.admin-mark-correct {
+  background: #1c7c2a;
+  border-color: #1c7c2a;
+  color: #fff;
+}
+.admin-mark-correct:hover { background: #166323; }
 
 .admin-mark-wrong {
-  background: #fdecea;
+  background: #c0291c;
   border-color: #c0291c;
-  color: #c0291c;
+  color: #fff;
 }
-.admin-mark-wrong:hover { background: #fbdcd8; }
+.admin-mark-wrong:hover { background: #a52217; }
+
+/* Marked rows tint so remaining work stands out while scrolling. */
+.admin-row-correct {
+  background: #f0faf1;
+  border-color: #bfe3c6;
+}
+.admin-row-wrong {
+  background: #fdf1f0;
+  border-color: #ecc4bf;
+}
 
 /* ----------------------------------------------------------
    PHOTO MARKING — same card layout as quiz marking, plus a
@@ -276,7 +360,8 @@
    answers marked correct count.
    ---------------------------------------------------------- */
 .admin-table-wrap {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 75vh;
   background: #fff;
   border: 1px solid #e1e3e7;
   border-radius: 8px;
@@ -305,10 +390,21 @@
   letter-spacing: 0.02em;
 }
 
+/* Header stays put while the table scrolls under it. */
+.admin-score-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  box-shadow: inset 0 -1px 0 #e1e3e7;
+}
+
+.admin-score-table tbody tr:nth-child(even) td { background: #fafbfc; }
+
 .admin-score-table tbody tr:last-child th,
 .admin-score-table tbody tr:last-child td { border-bottom: none; }
 
-.admin-score-rank { width: 32px; color: #6b6f76; }
+.admin-score-rank { width: 42px; color: #6b6f76; }
 .admin-score-team {
   text-align: left;
   font-weight: 600;
@@ -377,11 +473,36 @@
 .admin-lb-rank-2 { background: #e8eaee; color: #555; }
 .admin-lb-rank-3 { background: #f3d9c4; color: #8a4b16; }
 
-.admin-lb-name {
+.admin-lb-main {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-lb-name {
   font-weight: 500;
   overflow-wrap: anywhere;
 }
+
+/* Points relative to the section leader, so gaps read at a glance. */
+.admin-lb-bar-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #eef0f3;
+  overflow: hidden;
+}
+
+.admin-lb-bar {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: #9aa0a8;
+}
+.admin-lb-bar-1 { background: #d9a800; }
+.admin-lb-bar-2 { background: #8b93a1; }
+.admin-lb-bar-3 { background: #c07b3a; }
 
 .admin-lb-points {
   font-size: 13px;

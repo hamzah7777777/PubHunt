@@ -7,6 +7,7 @@ import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import BottomNav, { type AppTab } from './components/BottomNav';
+import InstructionsPanel from './components/InstructionsPanel';
 import HintsMenu from './pages/HintsMenu';
 import QuizMenu from './pages/QuizMenu';
 import QuizPage from './pages/QuizPage';
@@ -185,6 +186,20 @@ export default function App() {
           <span>PUB<span>HUNT</span></span>
         </div>
         <div className="game-header-actions">
+          {view === 'landing' && (
+            <button
+              id="go-admin-login-btn"
+              className="mute-btn"
+              onClick={() => {
+                sfx.playClick();
+                setView(adminAuthed ? 'admin-dashboard' : 'admin-login');
+              }}
+              aria-label="Host login"
+              title="Host login"
+            >
+              <Shield size={18} />
+            </button>
+          )}
           <button className="mute-btn" onClick={toggleMute} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
@@ -214,16 +229,19 @@ export default function App() {
                 <Users size={18} /> Team Portal
               </button>
 
-              <button
-                id="go-admin-login-btn"
+              <InstructionsPanel alwaysOpen />
+
+              <a
                 className="btn btn-secondary btn-block btn-lg"
-                onClick={() => {
-                  sfx.playClick();
-                  setView(adminAuthed ? 'admin-dashboard' : 'admin-login');
-                }}
+                href="https://www.facebook.com/groups/1657912238864031"
+                target="_blank"
+                rel="noreferrer"
               >
-                <Shield size={18} /> Host
-              </button>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.6-1.5h1.4V5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8V11H8.2v3h2.4v7h2.9Z" />
+                </svg>
+                Pub Hunt 2026 Facebook Group
+              </a>
             </div>
           )}
 

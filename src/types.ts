@@ -17,6 +17,16 @@ export interface TeamSession {
   pin?: string;
 }
 
+// Facebook photo/video challenge: marked from the Facebook group, no
+// in-app submission. null = not checked, true/false = uploaded or not.
+export interface FacebookMark {
+  id: string;
+  team_id: string;
+  team_photo: boolean | null;
+  selection_video: boolean | null;
+  scene_video: boolean | null;
+}
+
 export interface AdminTeam {
   id: string;
   name: string;

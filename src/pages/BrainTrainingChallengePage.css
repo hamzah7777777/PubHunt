@@ -1,0 +1,296 @@
+/* =========================================================
+   BRAIN TRAINING - DS-style skin (Prof. Kawashima homage)
+   Scoped to .bt-* so it can live inside the Pixel Arcade app
+   without inheriting its hard pixel look: soft rounded white
+   panels, magenta title bars, Comfortaa type, red/blue frames.
+   The professor asks one question at a time from a speech
+   bubble; his expression changes on every tap and keystroke.
+   ========================================================= */
+
+/* Comfortaa 400/700 is already loaded app-wide from Google Fonts
+   (see index.html - it doubles as the Sims hint theme font). */
+
+.bt-shell {
+  --bt-screen: #eceaf0;
+  --bt-ink: #3a3a42;
+  --bt-magenta: #e0417f;
+  --bt-magenta-deep: #c92f6d;
+  --bt-red: #e03131;
+  --bt-blue: #3b43c8;
+  --bt-blue-deep: #2c33a0;
+  --bt-green: #7ed07e;
+  --bt-green-deep: #2e7d32;
+  --bt-bubble-border: #35353b;
+
+  font-family: 'Comfortaa', sans-serif;
+  background: #2b2a31; /* DS bezel */
+  border-radius: 22px;
+  padding: 10px;
+  color: var(--bt-ink);
+  image-rendering: auto;
+  user-select: none;
+}
+
+.bt-shell img {
+  image-rendering: auto;
+}
+
+/* The global stylesheet forces the pixel font onto every <p>;
+   claw those back to the DS look. */
+.bt-shell p {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.bt-screen {
+  background: var(--bt-screen);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- top row: Back pill + title bar ---- */
+.bt-topbar {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.bt-back {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  background: var(--bt-magenta);
+  border: 2px solid var(--bt-magenta-deep);
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.08s ease;
+}
+.bt-back:active {
+  transform: scale(0.94);
+}
+
+.bt-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--bt-magenta);
+  border: 2px solid var(--bt-magenta-deep);
+  border-radius: 10px;
+  padding: 6px 14px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+}
+
+/* ---- progress dots: one per question ---- */
+.bt-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bt-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #cac7d3;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+.bt-dot:active {
+  transform: scale(0.85);
+}
+.bt-dot.bt-dot-done {
+  background: var(--bt-green);
+}
+.bt-dot.bt-dot-current {
+  border-color: var(--bt-magenta);
+  background: #fff;
+}
+.bt-dot.bt-dot-done.bt-dot-current {
+  background: var(--bt-green);
+}
+
+/* ---- the professor asking the question ---- */
+.bt-ask {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bt-bubble {
+  position: relative;
+  align-self: stretch;
+  background: #fff;
+  border: 2px solid var(--bt-bubble-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.55;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.bt-bubble p {
+  margin: 0;
+  color: var(--bt-ink);
+}
+.bt-bubble .bt-qnum {
+  color: var(--bt-red);
+}
+/* speech tail pointing down to the professor */
+.bt-bubble::before,
+.bt-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  border-style: solid;
+}
+.bt-bubble::before {
+  bottom: -17px;
+  margin-left: -14px;
+  border-width: 17px 12px 0 8px;
+  border-color: var(--bt-bubble-border) transparent transparent transparent;
+}
+.bt-bubble::after {
+  bottom: -13px;
+  margin-left: -11px;
+  border-width: 14px 9px 0 6px;
+  border-color: #fff transparent transparent transparent;
+}
+
+.bt-face {
+  position: relative;
+  width: 200px;
+  height: 222px;
+}
+
+.bt-face img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  opacity: 0;
+  pointer-events: none;
+}
+.bt-face img.bt-face-on {
+  opacity: 1;
+}
+
+@keyframes bt-face-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.08) rotate(-2deg); }
+  100% { transform: scale(1); }
+}
+.bt-face.bt-face-react {
+  animation: bt-face-pop 0.18s ease-out;
+  transform-origin: bottom center;
+}
+
+/* ---- answer + navigation ---- */
+.bt-input {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--bt-ink);
+  background: #fff;
+  border: 2px solid #c9c6d2;
+  border-radius: 10px;
+  padding: 13px;
+  width: 100%;
+  text-align: center;
+  user-select: text;
+}
+.bt-input:focus {
+  outline: none;
+  border-color: var(--bt-magenta);
+}
+.bt-input::placeholder {
+  color: #a09cae;
+  font-weight: 400;
+}
+
+.bt-nav {
+  display: flex;
+  gap: 10px;
+}
+
+.bt-btn {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 10px;
+  padding: 11px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.08s ease;
+}
+.bt-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.bt-btn:disabled {
+  cursor: default;
+}
+
+.bt-step {
+  flex: 1;
+  color: #fff;
+  background: var(--bt-blue);
+  border: 2px solid var(--bt-blue-deep);
+}
+.bt-step:disabled {
+  background: #cac7d3;
+  border-color: #b3afc0;
+  color: #8b879a;
+}
+
+.bt-submit {
+  flex: 1.4;
+  color: #fff;
+  background: var(--bt-magenta);
+  border: 2px solid var(--bt-magenta-deep);
+}
+.bt-submit.bt-submit-done {
+  background: var(--bt-green);
+  border-color: var(--bt-green-deep);
+  color: #1d4d20;
+}
+.bt-submit:disabled:not(.bt-submit-done) {
+  background: #cac7d3;
+  border-color: #b3afc0;
+  color: #8b879a;
+}
+
+/* ---- misc ---- */
+.bt-error {
+  background: #fff;
+  border: 3px solid var(--bt-red);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--bt-red);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.bt-loading {
+  text-align: center;
+  font-weight: 700;
+  color: #8b879a;
+  padding: 12px 0;
+}

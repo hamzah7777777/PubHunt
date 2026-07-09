@@ -1,22 +1,40 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Send } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
 import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
+import './BrainTrainingChallengePage.css';
 
 interface Props {
   teamId: string;
   onBack: () => void;
 }
 
+const FACES = [
+  '/braintrainer/braintrainer1.png',
+  '/braintrainer/braintrainer2.png',
+  '/braintrainer/braintrainer3.png',
+  '/braintrainer/braintrainer4.png',
+  '/braintrainer/braintrainer5.png',
+  '/braintrainer/braintrainer6.png',
+  '/braintrainer/braintrainer7.png',
+];
+
 export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
   const [drafts, setDrafts] = useState<string[]>(() => BRAIN_TRAINING_CHALLENGE.map(() => ''));
   // What's currently saved in the DB per question, so we can show a
   // "Submitted" state and whether the draft has unsaved edits.
   const [saved, setSaved] = useState<(string | null)[]>(() => BRAIN_TRAINING_CHALLENGE.map(() => null));
+  const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Counts every tap on the screen and every keystroke in the answer box;
+  // the professor's expression is reactions % FACES.length, and the counter
+  // doubles as the animation key so his "pop" replays each time without
+  // him moving.
+  const [reactions, setReactions] = useState(0);
+  const react = () => setReactions(r => r + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,17 +63,18 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
     };
   }, [teamId]);
 
-  const submitAnswer = async (index: number) => {
+  const submitAnswer = async () => {
+    const index = current;
     const answer = drafts[index].trim();
     if (!answer) return;
-    setSubmitting(index);
+    setSubmitting(true);
     setError('');
     const { error: rpcError } = await supabase.rpc('submit_brain_training_answer', {
       p_team_id: teamId,
       p_question: index + 1,
       p_answer: answer,
     });
-    setSubmitting(null);
+    setSubmitting(false);
     if (rpcError) {
       sfx.playError();
       setError('Could not save your answer. Please try again.');
@@ -65,55 +84,90 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
     setSaved(prev => prev.map((s, i) => (i === index ? answer : s)));
   };
 
+  const item = BRAIN_TRAINING_CHALLENGE[current];
+  const isSubmitted = saved[current] !== null;
+  const isDirty = drafts[current].trim() !== (saved[current] ?? '');
+  const done = isSubmitted && !isDirty;
+
   return (
-    <div className="flex flex-col gap-24 scale-up-anim">
-      <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
-        <ArrowLeft size={16} /> Trivia Quiz
-      </button>
-
-      <div className="panel panel-dark text-center" style={{ padding: '24px' }}>
-        <span className="kicker kicker-white">Video game knowledge</span>
-        <h1 style={{ color: 'var(--color-white)', fontSize: 32, marginBottom: 8 }}>BRAIN TRAINING</h1>
-        <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, marginBottom: 0 }}>
-          Test your video game trivia. 1 point each!
-        </p>
-      </div>
-
-      {error && (
-        <div className="alert alert-danger">
-          <span>{error}</span>
+    <div className="bt-shell scale-up-anim" onPointerDown={react}>
+      <div className="bt-screen">
+        <div className="bt-topbar">
+          <button type="button" className="bt-back" onClick={onBack}>
+            Back
+          </button>
+          <div className="bt-title">Brain Training</div>
         </div>
-      )}
 
-      {loading ? (
-        <p style={{ color: 'var(--color-body-subtle)' }}>Loading…</p>
-      ) : (
-        BRAIN_TRAINING_CHALLENGE.map((item, i) => {
-          const isSubmitted = saved[i] !== null;
-          const isDirty = drafts[i].trim() !== (saved[i] ?? '');
-          return (
-            <div key={i} className="panel panel-secondary" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <label className="game-label" htmlFor={`brain-q${i}`}>
-                Question {i + 1}
-              </label>
-              <p style={{ margin: 0, color: 'var(--fg-purple-strong)', fontWeight: 600 }}>{item.question}</p>
-              <input
-                id={`brain-q${i}`}
-                type="text"
-                className="game-input"
-                placeholder="Your answer…"
-                value={drafts[i]}
-                onChange={e => setDrafts(prev => prev.map((d, j) => (j === i ? e.target.value : d)))}
-              />
+        {error && <div className="bt-error">{error}</div>}
+
+        {loading ? (
+          <p className="bt-loading">Loading…</p>
+        ) : (
+          <>
+            <div className="bt-dots">
+              {BRAIN_TRAINING_CHALLENGE.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Question ${i + 1}`}
+                  className={`bt-dot${saved[i] !== null ? ' bt-dot-done' : ''}${i === current ? ' bt-dot-current' : ''}`}
+                  onClick={() => setCurrent(i)}
+                />
+              ))}
+            </div>
+
+            <div className="bt-ask">
+              <div className="bt-bubble">
+                <p>
+                  <span className="bt-qnum">Question {current + 1}:</span> {item.question}
+                </p>
+              </div>
+              <div key={reactions} className={`bt-face${reactions > 0 ? ' bt-face-react' : ''}`}>
+                {FACES.map((src, i) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    draggable={false}
+                    className={reactions % FACES.length === i ? 'bt-face-on' : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              className="bt-input"
+              placeholder="Write your answer…"
+              value={drafts[current]}
+              onChange={e => {
+                react();
+                setDrafts(prev => prev.map((d, j) => (j === current ? e.target.value : d)));
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') submitAnswer();
+              }}
+            />
+
+            <div className="bt-nav">
               <button
                 type="button"
-                className="btn btn-primary btn-block"
-                disabled={submitting === i || !drafts[i].trim() || (isSubmitted && !isDirty)}
-                onClick={() => submitAnswer(i)}
+                className="bt-btn bt-step"
+                disabled={current === 0}
+                onClick={() => setCurrent(c => c - 1)}
               >
-                {submitting === i ? (
+                <ChevronLeft size={16} /> Prev
+              </button>
+              <button
+                type="button"
+                className={`bt-btn bt-submit${done ? ' bt-submit-done' : ''}`}
+                disabled={submitting || !drafts[current].trim() || done}
+                onClick={submitAnswer}
+              >
+                {submitting ? (
                   'Saving…'
-                ) : isSubmitted && !isDirty ? (
+                ) : done ? (
                   <>
                     <Check size={16} /> Submitted
                   </>
@@ -123,10 +177,18 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
                   </>
                 )}
               </button>
+              <button
+                type="button"
+                className="bt-btn bt-step"
+                disabled={current === BRAIN_TRAINING_CHALLENGE.length - 1}
+                onClick={() => setCurrent(c => c + 1)}
+              >
+                Next <ChevronRight size={16} />
+              </button>
             </div>
-          );
-        })
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
