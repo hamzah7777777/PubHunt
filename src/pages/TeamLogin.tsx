@@ -101,6 +101,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
       status: row.status,
       route: row.route,
       participants: row.participants,
+      pin: pin.trim(),
     });
   };
 

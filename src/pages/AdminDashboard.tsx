@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ClipboardCheck, Download, LogOut, Plus, Trash2, X } from 'lucide-react';
+import { ClipboardCheck, Download, LogOut, Plus, QrCode, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
@@ -380,9 +380,20 @@ export default function AdminDashboard({ onLogout }: Props) {
     <div className="admin-dashboard">
       <div className="admin-topbar">
         <h1>Host Dashboard</h1>
-        <button id="admin-logout-btn" className="admin-logout" onClick={handleLogout}>
-          <LogOut size={14} /> Log out
-        </button>
+        <div className="admin-topbar-actions">
+          <button
+            className="admin-logout"
+            onClick={() => {
+              setPage('dashboard');
+              setSection('qr');
+            }}
+          >
+            <QrCode size={14} /> QR Codes
+          </button>
+          <button id="admin-logout-btn" className="admin-logout" onClick={handleLogout}>
+            <LogOut size={14} /> Log out
+          </button>
+        </div>
       </div>
 
       <div className="admin-body">
@@ -427,12 +438,6 @@ export default function AdminDashboard({ onLogout }: Props) {
                 onClick={() => setSection('leaderboard')}
               >
                 Leaderboards
-              </button>
-              <button
-                className={`admin-btn admin-tab ${section === 'qr' ? 'admin-tab-active' : ''}`}
-                onClick={() => setSection('qr')}
-              >
-                QR Codes
               </button>
               <button
                 className="admin-btn admin-btn-primary admin-marking-link"

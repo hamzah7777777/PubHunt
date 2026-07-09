@@ -12,6 +12,9 @@ export interface TeamSession {
   status: string;
   route: string;
   participants: Participant[];
+  // The PIN the team logged in with. Optional: sessions saved before this
+  // field existed won't have it until the team next logs in.
+  pin?: string;
 }
 
 export interface AdminTeam {

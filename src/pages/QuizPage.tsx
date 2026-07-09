@@ -74,12 +74,12 @@ export default function QuizPage({ teamId, route, quizNumber, onBack }: Props) {
   return (
     <div className="flex flex-col gap-24 scale-up-anim">
       <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
-        <ArrowLeft size={16} /> All quizzes
+        <ArrowLeft size={16} /> All pubs
       </button>
 
       <div className="panel panel-dark text-center" style={{ padding: '24px' }}>
         <span className="kicker kicker-white">Route {route}</span>
-        <h1 style={{ color: 'var(--color-white)', fontSize: 32 }}>QUIZ {quizNumber}</h1>
+        <h1 style={{ color: 'var(--color-white)', fontSize: 32 }}>PUB {quizNumber} QUESTIONS</h1>
       </div>
 
       {error && (

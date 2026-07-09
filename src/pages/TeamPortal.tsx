@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Gamepad2, Map, Users } from 'lucide-react';
 import type { TeamSession } from '../types';
 
@@ -20,6 +20,14 @@ export default function TeamPortal({ session, onLogout }: Props) {
 
   const [showInstructions, setShowInstructions] = useState(false);
   const [showTeamName, setShowTeamName] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+
+  // Don't leave the PIN on screen — it auto-hides after 5 seconds.
+  useEffect(() => {
+    if (!showPin) return;
+    const timer = setTimeout(() => setShowPin(false), 5000);
+    return () => clearTimeout(timer);
+  }, [showPin]);
 
   return (
     <div className="flex flex-col gap-24 scale-up-anim">
@@ -114,6 +122,31 @@ export default function TeamPortal({ session, onLogout }: Props) {
         )}
       </div>
 
+      {session.pin && (
+        <div className="panel panel-secondary">
+          <button
+            type="button"
+            id="team-portal-toggle-pin-btn"
+            className="btn btn-outline"
+            style={{ width: '100%' }}
+            onClick={() => setShowPin(prev => !prev)}
+          >
+            {showPin ? <EyeOff size={16} /> : <Eye size={16} />} {showPin ? 'Hide' : 'Show'} Team PIN
+          </button>
+
+          {showPin && (
+            <div className="text-center" style={{ marginTop: 16 }}>
+              <span className="kicker">Your Team PIN</span>
+              <div style={{ fontFamily: 'var(--font-pixel)', fontSize: 28, letterSpacing: 8, marginTop: 8 }}>
+                {session.pin}
+              </div>
+              <p style={{ color: 'var(--color-body-subtle)', marginTop: 8, marginBottom: 0 }}>
+                Share it with teammates so they can log in too.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );

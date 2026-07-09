@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Check, X } from 'lucide-react';
-import { ROUTE_QUIZZES } from './quiz';
+import { ROUTE_QUIZ_ANSWERS, ROUTE_QUIZZES } from './quiz';
 import { PHOTO_CHALLENGE } from './photoChallenge';
 import { ANAGRAM_CHALLENGE } from './anagramChallenge';
 import { CONSOLE_CHALLENGE } from './consoleChallenge';
@@ -203,10 +203,13 @@ export default function AdminMarkingPage({
                       <div key={a.id} className="admin-quiz-row">
                         <div className="admin-quiz-question">
                           <span className="admin-chip">
-                            Quiz {a.quiz_number} · Q{a.question_number}
+                            Pub {a.quiz_number} · Q{a.question_number}
                           </span>
                           <span className="admin-quiz-question-text">
                             {ROUTE_QUIZZES[route][a.quiz_number - 1]?.[a.question_number - 1] ?? ''}
+                          </span>
+                          <span className="admin-photo-expected">
+                            Answer: {ROUTE_QUIZ_ANSWERS[route][a.quiz_number - 1]?.[a.question_number - 1] ?? '?'}
                           </span>
                         </div>
                         <div className="admin-quiz-answer-line">

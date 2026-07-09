@@ -62,7 +62,7 @@ export default function QuizMenu({ teamId, route, onSelect }: Props) {
                 onSelect(n);
               }}
             >
-              <span>Quiz {n}</span>
+              <span>Pub {n} Questions</span>
               {done !== undefined && <span className="btn-count">{done}/{QUESTIONS_PER_QUIZ}</span>}
             </button>
           );
