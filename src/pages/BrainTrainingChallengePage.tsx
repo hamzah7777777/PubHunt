@@ -68,7 +68,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
   return (
     <div className="flex flex-col gap-24 scale-up-anim">
       <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
-        <ArrowLeft size={16} /> Challenges
+        <ArrowLeft size={16} /> Trivia Quiz
       </button>
 
       <div className="panel panel-dark text-center" style={{ padding: '24px' }}>

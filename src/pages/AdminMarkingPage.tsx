@@ -21,7 +21,7 @@ type MarkingSection = 'clash' | 'quiz' | 'photos' | 'anagrams' | 'consoles' | 'b
 
 const TABS: { id: MarkingSection; label: string }[] = [
   { id: 'clash', label: 'Team Clash' },
-  { id: 'quiz', label: 'Quiz' },
+  { id: 'quiz', label: 'Route Quiz' },
   { id: 'photos', label: 'Characters' },
   { id: 'anagrams', label: 'Anagrams' },
   { id: 'consoles', label: 'Consoles' },

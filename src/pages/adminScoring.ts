@@ -23,7 +23,7 @@ export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export const SECTION_LABELS: Record<SectionKey, string> = {
   clash: 'Team Clash',
-  quiz: 'Pub Quiz',
+  quiz: 'Route Quiz',
   photos: 'Photo Challenge : Characters',
   anagrams: 'Anagram Challenge',
   consoles: 'Photo Challenge : Consoles',
@@ -34,7 +34,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 // Compact names for the score table's column headers.
 export const SECTION_SHORT_LABELS: Record<SectionKey, string> = {
   clash: 'Clash',
-  quiz: 'Quiz',
+  quiz: 'Route Quiz',
   photos: 'Characters',
   anagrams: 'Anagrams',
   consoles: 'Consoles',

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ClipboardCheck, LogOut, Plus, Trash2, X } from 'lucide-react';
+import { ClipboardCheck, Download, LogOut, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import AdminMarkingPage from './AdminMarkingPage';
+import AdminQrCodes from './AdminQrCodes';
 import {
   SECTION_KEYS,
   SECTION_LABELS,
@@ -75,7 +76,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   // All the marking lives on its own page; the dashboard has the rest.
   const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
-  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard'>('teams');
+  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'qr'>('teams');
 
   useEffect(() => {
     (async () => {
@@ -166,6 +167,26 @@ export default function AdminDashboard({ onLogout }: Props) {
     setEditingTeamId(null);
     setTeams(prev => prev.filter(t => t.id !== teamId));
     setParticipants(prev => prev.filter(p => p.team_id !== teamId));
+  };
+
+  const exportTeamsCsv = () => {
+    const quote = (f: string) => (/[",\n\r]/.test(f) ? `"${f.replace(/"/g, '""')}"` : f);
+    const rows = [
+      ['Team Name', 'Theme', 'Captain', 'Route', 'PIN'],
+      ...teams.map(team => {
+        const captain = participants.find(p => p.team_id === team.id && p.role === 'captain');
+        return [team.name, team.game_theme, captain?.full_name ?? '', team.route, team.pin];
+      }),
+    ];
+    const csv = rows.map(row => row.map(quote).join(',')).join('\r\n');
+    // BOM so Excel opens it as UTF-8.
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'pubhunt-teams.csv';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const addTeam = async () => {
@@ -408,6 +429,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                 Leaderboards
               </button>
               <button
+                className={`admin-btn admin-tab ${section === 'qr' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('qr')}
+              >
+                QR Codes
+              </button>
+              <button
                 className="admin-btn admin-btn-primary admin-marking-link"
                 onClick={() => setPage('marking')}
               >
@@ -422,9 +449,14 @@ export default function AdminDashboard({ onLogout }: Props) {
                   <span className="admin-stats">
                     {teams.length} teams · {participants.length} participants
                   </span>
-                  <button id="admin-add-team-btn" className="admin-btn admin-btn-primary" onClick={addTeam}>
-                    <Plus size={14} /> Add team
-                  </button>
+                  <div className="admin-toolbar-actions">
+                    <button className="admin-btn" onClick={exportTeamsCsv}>
+                      <Download size={14} /> Export CSV
+                    </button>
+                    <button id="admin-add-team-btn" className="admin-btn admin-btn-primary" onClick={addTeam}>
+                      <Plus size={14} /> Add team
+                    </button>
+                  </div>
                 </div>
 
                 <div className="admin-team-list">
@@ -499,6 +531,8 @@ export default function AdminDashboard({ onLogout }: Props) {
                 </div>
               </>
             )}
+
+            {section === 'qr' && <AdminQrCodes />}
 
             {section === 'leaderboard' && (
               <>

@@ -1,4 +1,4 @@
-import { Camera, Compass, ListChecks, Users } from 'lucide-react';
+import { Compass, Gamepad2, ListChecks, Users } from 'lucide-react';
 import { sfx } from '../lib/sfx';
 
 export type AppTab = 'team' | 'hints' | 'quiz' | 'challenges';
@@ -11,8 +11,8 @@ interface Props {
 const TABS: { id: AppTab; label: string; icon: typeof Users }[] = [
   { id: 'team', label: 'Team', icon: Users },
   { id: 'hints', label: 'Hints', icon: Compass },
-  { id: 'quiz', label: 'Quiz', icon: ListChecks },
-  { id: 'challenges', label: 'Challenges', icon: Camera },
+  { id: 'quiz', label: 'Route Quiz', icon: ListChecks },
+  { id: 'challenges', label: 'Trivia Quiz', icon: Gamepad2 },
 ];
 
 export default function BottomNav({ active, onChange }: Props) {

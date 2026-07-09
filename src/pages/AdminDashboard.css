@@ -70,6 +70,58 @@
   font-size: 13px;
 }
 
+.admin-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.admin-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 12px;
+  border: 1px solid #d0d3d8;
+  background: #fff;
+  text-align: center;
+}
+
+.admin-qr-title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.admin-qr-subtitle {
+  color: #555;
+  font-size: 12px;
+}
+
+.admin-qr-img {
+  width: 132px;
+  height: 132px;
+  image-rendering: pixelated;
+  margin: 6px 0;
+}
+
+.admin-qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  border: 1px dashed #d0d3d8;
+}
+
+.admin-qr-download {
+  width: 100%;
+}
+
 .admin-btn {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Brain, Camera, Gamepad2, Joystick, Shuffle, SpellCheck, Swords } from 'lucide-react';
+import { Brain, Gamepad2, Joystick, Shuffle, SpellCheck, Swords } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
 import TeamClashChallengePage from './TeamClashChallengePage';
@@ -128,9 +128,9 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
     <div className="flex flex-col gap-24 scale-up-anim">
       <div className="panel panel-dark text-center" style={{ padding: '32px 24px' }}>
         <span className="kicker kicker-white">En Route</span>
-        <h1 style={{ color: 'var(--color-white)', fontSize: 32, marginBottom: 8 }}>CHALLENGES</h1>
+        <h1 style={{ color: 'var(--color-white)', fontSize: 32, marginBottom: 8 }}>TRIVIA QUIZ</h1>
         <div className="flex items-center justify-center gap-8" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 18 }}>
-          <Camera size={18} />
+          <Gamepad2 size={18} />
           <span>Extra points for creativity!</span>
         </div>
       </div>
