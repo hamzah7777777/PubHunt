@@ -131,9 +131,6 @@ async function drawPoster(spec: QrSpec): Promise<HTMLCanvasElement> {
   ctx.fillStyle = CYAN;
   ctx.font = '40px "Press Start 2P"';
   ctx.fillText('SCAN TO PLAY', W / 2, footerY);
-  ctx.fillStyle = BODY;
-  ctx.font = '48px "VT323"';
-  ctx.fillText(spec.url.replace('https://', ''), W / 2, footerY + 80);
   ctx.fillStyle = GREEN;
   ctx.font = '30px "VT323"';
   ctx.fillText('PRESS START · INSERT COIN · RAISE A GLASS', W / 2, H - 90);

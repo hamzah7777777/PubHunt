@@ -7,6 +7,7 @@ interface Props {
   time: string;
   onBack: () => void;
   onNext?: () => void;
+  nextLabel?: string;
 }
 
 function StoneButton({ label, primary, onClick }: { label: string; primary?: boolean; onClick?: () => void }) {
@@ -35,7 +36,7 @@ function StoneButton({ label, primary, onClick }: { label: string; primary?: boo
   );
 }
 
-export default function HintMinecraft({ hint, time, onBack, onNext }: Props) {
+export default function HintMinecraft({ hint, time, onBack, onNext, nextLabel }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', position: 'relative', overflow: 'hidden', fontFamily: "'Silkscreen', monospace" }}>
@@ -63,7 +64,7 @@ export default function HintMinecraft({ hint, time, onBack, onNext }: Props) {
 
       {/* menu buttons */}
       <div style={{ position: 'absolute', left: '8%', right: '8%', top: '70%', display: 'flex', flexDirection: 'column', gap: 7 }}>
-        {onNext && <StoneButton label="Next Pub Hint" primary onClick={onNext} />}
+        {onNext && <StoneButton label={nextLabel ?? 'Next Pub Hint'} primary onClick={onNext} />}
         <StoneButton label="Back" onClick={onBack} />
         <div style={{ display: 'flex', gap: 7 }}>
           <div style={{ flex: 1 }}><StoneButton label="Options..." /></div>

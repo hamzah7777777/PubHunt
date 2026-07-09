@@ -8,9 +8,10 @@ interface Props {
   time: string;
   onBack: () => void;
   onNext?: () => void;
+  nextLabel?: string;
 }
 
-export default function HintAmongUs({ hint, time, onBack, onNext }: Props) {
+export default function HintAmongUs({ hint, time, onBack, onNext, nextLabel }: Props) {
   return (
     <HintFrame>
     <div style={{
@@ -88,7 +89,7 @@ export default function HintAmongUs({ hint, time, onBack, onNext }: Props) {
               boxShadow: '0 6px 0 0 #143018, 0 0 0 1px rgba(153,210,90,0.3)',
             }}
           >
-            Next Pub Hint
+            {nextLabel ?? 'Next Pub Hint'}
           </button>
         )}
       </div>

@@ -5,9 +5,10 @@ interface Props {
   time: string;
   onBack: () => void;
   onNext?: () => void;
+  nextLabel?: string;
 }
 
-export default function HintPokemon({ hint, time, onBack, onNext }: Props) {
+export default function HintPokemon({ hint, time, onBack, onNext, nextLabel }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Silkscreen', monospace", background: '#6b6fc9', padding: '14px 14px 0' }}>
@@ -85,7 +86,7 @@ export default function HintPokemon({ hint, time, onBack, onNext }: Props) {
               boxShadow: '4px 4px 0 0 #1a1a1a',
             }}
           >
-            NEXT PUB HINT
+            {nextLabel ?? 'NEXT PUB HINT'}
           </button>
         )}
       </div>

@@ -19,11 +19,12 @@ interface Props {
   time: string;
   onBack: () => void;
   onNext?: () => void;
+  nextLabel?: string;
 }
 
 const pixelImg: CSSProperties = { imageRendering: 'pixelated', display: 'block' };
 
-export default function HintMario({ hint, time, onBack, onNext }: Props) {
+export default function HintMario({ hint, time, onBack, onNext, nextLabel }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Press Start 2P', monospace", background: '#5c94fc' }}>
@@ -139,7 +140,7 @@ export default function HintMario({ hint, time, onBack, onNext }: Props) {
               boxShadow: '4px 4px 0 0 #000',
             }}
           >
-            NEXT PUB HINT
+            {nextLabel ?? 'NEXT PUB HINT'}
           </button>
         )}
       </div>

@@ -5,6 +5,7 @@ interface Props {
   time: string;
   onBack: () => void;
   onNext?: () => void;
+  nextLabel?: string;
 }
 
 function HudCorner({ rotate }: { rotate: number }) {
@@ -25,7 +26,7 @@ const dogTag = (
   </svg>
 );
 
-export default function HintBlackOps({ hint, time, onBack, onNext }: Props) {
+export default function HintBlackOps({ hint, time, onBack, onNext, nextLabel }: Props) {
   return (
     <HintFrame>
     <div style={{ minHeight: '100%', fontFamily: "'Bebas Neue', Arial, sans-serif", background: '#0a0a0a', color: '#e8e8e8', position: 'relative' }}>
@@ -104,7 +105,7 @@ export default function HintBlackOps({ hint, time, onBack, onNext }: Props) {
               clipPath: 'polygon(0 0, 100% 0, 100% 70%, 96% 100%, 0 100%)',
             }}
           >
-            NEXT PUB HINT
+            {nextLabel ?? 'NEXT PUB HINT'}
           </button>
         )}
       </div>

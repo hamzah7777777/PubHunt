@@ -21,24 +21,24 @@ import { FINISH_HINT, ROUTE_HINTS } from './pages/hints';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint';
 
 // Themed shells by position: pubs 1-4, then the finish line. Both routes
 // share the shells; the riddle text comes from ROUTE_HINTS.
 const HINT_SHELLS = [HintMario, HintPokemon, HintAmongUs, HintMinecraft, HintBlackOps];
 
-// QR posters at each pub link to e.g. /#pub-A2 (route letter is decorative —
-// teams always see their own route's hint for that stop). 0 = start point,
-// 1-4 = pubs, 5 = finish line. Consumed once at startup; logged-out teams
-// get it applied right after login instead.
-function consumeHintDeepLink(): number | null {
-  const m = window.location.hash.match(/^#pub-(?:[ab])?([0-5])$/i);
+// QR posters at each pub link to e.g. /#pub-A2. 0 = start point, 1-4 = pubs,
+// 5 = finish line. Logged-in teams jump to that stop's hint page (their own
+// route's riddle — the URL's route letter is ignored); logged-out scanners
+// get a public standalone hint page, where the route letter picks the riddle.
+function consumeHintDeepLink(): { route: 'A' | 'B'; index: number } | null {
+  const m = window.location.hash.match(/^#pub-([ab])?([0-5])$/i);
   if (!m) return null;
   history.replaceState(null, '', window.location.pathname + window.location.search);
-  return Number(m[1]);
+  return { route: m[1]?.toUpperCase() === 'B' ? 'B' : 'A', index: Number(m[2]) };
 }
 
-const deepLinkHint = consumeHintDeepLink();
+const deepLink = consumeHintDeepLink();
 
 export default function App() {
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
@@ -49,28 +49,24 @@ export default function App() {
   // restore the portal (and the tab/hint they were on) from localStorage.
   const [view, setView] = useState<View>(() => {
     if (localStorage.getItem('pubhunt_team_session')) return 'team-portal';
-    // A scanned QR should drop logged-out teams straight onto the login form.
-    return deepLinkHint !== null ? 'team-login' : 'landing';
+    // A scanned QR shows logged-out visitors a standalone public hint page.
+    return deepLink !== null && deepLink.index > 0 ? 'public-hint' : 'landing';
   });
   const [muted, setMuted] = useState(false);
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>(() => {
-    if (deepLinkHint !== null && localStorage.getItem('pubhunt_team_session')) return 'hints';
+    if (deepLink !== null && localStorage.getItem('pubhunt_team_session')) return 'hints';
     const saved = localStorage.getItem('pubhunt_active_tab');
     return saved === 'hints' || saved === 'quiz' || saved === 'challenges' ? saved : 'team';
   });
   // null = the hints menu; 0 = the start point page; 1+ = that hint page
   const [hintIndex, setHintIndex] = useState<number | null>(() => {
-    if (deepLinkHint !== null && localStorage.getItem('pubhunt_team_session')) return deepLinkHint;
+    if (deepLink !== null && localStorage.getItem('pubhunt_team_session')) return deepLink.index;
     const saved = localStorage.getItem('pubhunt_hint_index');
     if (saved === null) return null;
     const n = Number(saved);
     return Number.isInteger(n) && n >= 0 && n <= HINT_SHELLS.length ? n : null;
   });
-  // A scanned QR before login: remember the hint and apply it post-login.
-  const [pendingHint, setPendingHint] = useState<number | null>(() =>
-    localStorage.getItem('pubhunt_team_session') ? null : deepLinkHint
-  );
   // null = the quiz menu; 1..5 = that quiz page
   const [quizNumber, setQuizNumber] = useState<number | null>(() => {
     const saved = localStorage.getItem('pubhunt_quiz_number');
@@ -123,9 +119,8 @@ export default function App() {
   const handleTeamLogin = (session: TeamSession) => {
     setTeamSession(session);
     localStorage.setItem('pubhunt_team_session', JSON.stringify(session));
-    setActiveTab(pendingHint !== null ? 'hints' : 'team');
-    setHintIndex(pendingHint);
-    setPendingHint(null);
+    setActiveTab('team');
+    setHintIndex(null);
     setQuizNumber(null);
     setChallengeSubpage(null);
     setView('team-portal');
@@ -172,6 +167,14 @@ export default function App() {
   // hintIndex: null = menu, 0 = start point page, 1..5 = pub hints/finish
   const activeHint = hintIndex !== null && hintIndex > 0 ? hintList[hintIndex - 1] : null;
   const HintShell = hintIndex !== null && hintIndex > 0 ? HINT_SHELLS[hintIndex - 1] : null;
+
+  // Standalone hint page for logged-out QR scans: the URL's route letter
+  // picks the riddle, and both buttons lead to the main page.
+  const publicHint =
+    deepLink && deepLink.index > 0
+      ? [...ROUTE_HINTS[deepLink.route], FINISH_HINT][deepLink.index - 1]
+      : null;
+  const PublicHintShell = deepLink && deepLink.index > 0 ? HINT_SHELLS[deepLink.index - 1] : null;
 
   return (
     <>
@@ -244,8 +247,19 @@ export default function App() {
             <HintShell
               hint={activeHint.hint}
               time={activeHint.time}
-              onNext={hintIndex < hintList.length ? () => setHintIndex(hintIndex + 1) : undefined}
+              onNext={() => setHintIndex(null)}
+              nextLabel="All Pub Hints"
               onBack={() => setHintIndex(null)}
+            />
+          )}
+
+          {view === 'public-hint' && PublicHintShell && publicHint && (
+            <PublicHintShell
+              hint={publicHint.hint}
+              time={publicHint.time}
+              onNext={() => setView('landing')}
+              nextLabel="PubHunt Main Page"
+              onBack={() => setView('landing')}
             />
           )}
 
