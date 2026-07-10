@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Beer, Shield, Users, Volume2, VolumeX } from 'lucide-react';
+import { Beer, LifeBuoy, Shield, Users, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from './lib/sfx';
 import { supabase } from './lib/supabase';
 import TeamLogin from './pages/TeamLogin';
@@ -200,6 +200,17 @@ export default function App() {
               <Shield size={18} />
             </button>
           )}
+          <a
+            className="mute-btn"
+            href="https://chat.whatsapp.com/Dbhq8V1wPaELGDZt24JPAE?s=cl&p=a&ilr=1"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => sfx.playClick()}
+            aria-label="Support (WhatsApp group)"
+            title="Support (WhatsApp group)"
+          >
+            <LifeBuoy size={18} />
+          </a>
           <button className="mute-btn" onClick={toggleMute} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>

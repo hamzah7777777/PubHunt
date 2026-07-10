@@ -213,7 +213,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
                 src={item.image}
                 alt={`Mystery character ${i + 1}`}
                 loading="lazy"
-                style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }}
+                style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', display: 'block' }}
               />
               <span
                 style={{

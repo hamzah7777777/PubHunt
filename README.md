@@ -17,7 +17,6 @@ npm run dev
 - `npm run dev` — start the dev server
 - `npm run build` — type-check and build for production
 - `npm run lint` — run ESLint
-- `npm run import-teams` — sync teams and rosters from `data/pubhuntparticipant.csv` (teams, captains, routes) and `data/pubhuntparticipantfull.csv` (full rosters) into Supabase. Safe to re-run: existing teams keep their PINs; add `--prune` to delete DB teams no longer in the CSV. Requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` env vars.
 
 ## Deployment
 
