@@ -201,7 +201,7 @@ export default function App() {
             </button>
           )}
           <a
-            className="mute-btn"
+            className="mute-btn support-btn"
             href="https://chat.whatsapp.com/Dbhq8V1wPaELGDZt24JPAE?s=cl&p=a&ilr=1"
             target="_blank"
             rel="noreferrer"
@@ -210,6 +210,7 @@ export default function App() {
             title="Support (WhatsApp group)"
           >
             <LifeBuoy size={18} />
+            <span>Support</span>
           </a>
           <button className="mute-btn" onClick={toggleMute} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}

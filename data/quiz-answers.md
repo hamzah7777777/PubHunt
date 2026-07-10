@@ -35,9 +35,9 @@ Clue: "Gabe Newell's job title"
 
 Clue: "Your health is low, you need to get your ____ back before the final battle"
 
-1. Question to be confirmed
-2. Question to be confirmed
-3. Question to be confirmed
+1. What toy can be found by the fire escape? — **Pull along giraffe**
+2. What is the 3rd definition? — **A groove or vibe**
+3. How many red cans are lined up against the wall? — **53** (the red cans are Mojo cans; worded as "red cans" in the app so the pub name doesn't leak before the hint is solved)
 
 ## Route B
 
