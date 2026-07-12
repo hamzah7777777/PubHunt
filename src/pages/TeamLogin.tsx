@@ -122,6 +122,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
             id="team-pin"
             type="text"
             inputMode="numeric"
+            maxLength={12}
             className="game-input"
             placeholder="4-digit PIN from your captain"
             value={pin}

@@ -6,12 +6,13 @@ import { ROUTE_QUIZZES } from './quiz';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   route: 'A' | 'B';
   quizNumber: number;
   onBack: () => void;
 }
 
-export default function QuizPage({ teamId, route, quizNumber, onBack }: Props) {
+export default function QuizPage({ teamId, teamPin, route, quizNumber, onBack }: Props) {
   const questions = ROUTE_QUIZZES[route][quizNumber - 1];
   const [drafts, setDrafts] = useState<string[]>(() => questions.map(() => ''));
   // What's currently saved in the DB per question, so we can show a
@@ -24,7 +25,7 @@ export default function QuizPage({ teamId, route, quizNumber, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_quiz_answers', { p_team_id: teamId })
+      .rpc('get_team_quiz_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
@@ -60,6 +61,7 @@ export default function QuizPage({ teamId, route, quizNumber, onBack }: Props) {
       p_quiz: quizNumber,
       p_question: index + 1,
       p_answer: answer,
+      p_pin: teamPin,
     });
     setSubmitting(null);
     if (rpcError) {
@@ -104,6 +106,7 @@ export default function QuizPage({ teamId, route, quizNumber, onBack }: Props) {
                 id={`quiz-q${i}`}
                 type="text"
                 className="game-input"
+                maxLength={100}
                 placeholder="Your answer…"
                 value={drafts[i]}
                 onChange={e => setDrafts(prev => prev.map((d, j) => (j === i ? e.target.value : d)))}

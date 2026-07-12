@@ -6,10 +6,11 @@ import { ANAGRAM_CHALLENGE } from './anagramChallenge';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   onBack: () => void;
 }
 
-export default function AnagramChallengePage({ teamId, onBack }: Props) {
+export default function AnagramChallengePage({ teamId, teamPin, onBack }: Props) {
   const [drafts, setDrafts] = useState<string[]>(() => ANAGRAM_CHALLENGE.map(() => ''));
   // What's currently saved in the DB per anagram, so we can show a
   // "Submitted" state and whether the draft has unsaved edits.
@@ -21,7 +22,7 @@ export default function AnagramChallengePage({ teamId, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_anagram_answers', { p_team_id: teamId })
+      .rpc('get_team_anagram_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
@@ -43,7 +44,7 @@ export default function AnagramChallengePage({ teamId, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   const submitAnswer = async (index: number) => {
     const answer = drafts[index].trim();
@@ -54,6 +55,7 @@ export default function AnagramChallengePage({ teamId, onBack }: Props) {
       p_team_id: teamId,
       p_anagram: index + 1,
       p_answer: answer,
+      p_pin: teamPin,
     });
     setSubmitting(null);
     if (rpcError) {
@@ -103,6 +105,7 @@ export default function AnagramChallengePage({ teamId, onBack }: Props) {
                 id={`anagram-${i}`}
                 type="text"
                 className="game-input"
+                maxLength={100}
                 placeholder="Which game is it?…"
                 value={drafts[i]}
                 onChange={e => setDrafts(prev => prev.map((d, j) => (j === i ? e.target.value : d)))}

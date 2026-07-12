@@ -44,7 +44,16 @@ const deepLink = consumeHintDeepLink();
 export default function App() {
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
     const saved = localStorage.getItem('pubhunt_team_session');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    const session = JSON.parse(saved) as TeamSession;
+    // Sessions saved before the PIN-checked RPCs existed carry no pin and
+    // can't call them; force a fresh login (this also clears the storage
+    // before the view/tab initializers below read it).
+    if (!session.pin) {
+      localStorage.removeItem('pubhunt_team_session');
+      return null;
+    }
+    return session;
   });
   // A refresh shouldn't kick a logged-in team back to the landing page:
   // restore the portal (and the tab/hint they were on) from localStorage.
@@ -104,10 +113,14 @@ export default function App() {
   }, [challengeSubpage]);
 
   // Admins keep a Supabase auth session across refreshes; remember they're
-  // authed so the Host button goes straight back to the dashboard.
+  // authed so the Host button goes straight back to the dashboard. The
+  // session alone isn't proof — only sessions that claimed the passphrase
+  // (recorded server-side in admin_users) count.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setAdminAuthed(true);
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      const { data: isAdmin } = await supabase.rpc('is_admin');
+      if (isAdmin) setAdminAuthed(true);
     });
   }, []);
 
@@ -298,12 +311,13 @@ export default function App() {
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber === null && (
-            <QuizMenu teamId={teamSession.team_id} route={teamRoute} onSelect={setQuizNumber} />
+            <QuizMenu teamId={teamSession.team_id} teamPin={teamSession.pin ?? ''} route={teamRoute} onSelect={setQuizNumber} />
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber !== null && (
             <QuizPage
               teamId={teamSession.team_id}
+              teamPin={teamSession.pin ?? ''}
               route={teamRoute}
               quizNumber={quizNumber}
               onBack={() => setQuizNumber(null)}
@@ -313,6 +327,7 @@ export default function App() {
           {view === 'team-portal' && teamSession && activeTab === 'challenges' && (
             <ChallengesPage
               teamId={teamSession.team_id}
+              teamPin={teamSession.pin ?? ''}
               subpage={challengeSubpage}
               onSubpageChange={setChallengeSubpage}
             />

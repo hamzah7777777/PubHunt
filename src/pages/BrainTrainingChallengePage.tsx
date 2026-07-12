@@ -7,6 +7,7 @@ import './BrainTrainingChallengePage.css';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   onBack: () => void;
 }
 
@@ -15,7 +16,7 @@ interface Props {
 const FACE_COUNT = 17;
 const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.png`);
 
-export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
+export default function BrainTrainingChallengePage({ teamId, teamPin, onBack }: Props) {
   const [drafts, setDrafts] = useState<string[]>(() => BRAIN_TRAINING_CHALLENGE.map(() => ''));
   // What's currently saved in the DB per question, so we can show a
   // "Submitted" state and whether the draft has unsaved edits.
@@ -40,7 +41,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_brain_training_answers', { p_team_id: teamId })
+      .rpc('get_team_brain_training_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
@@ -62,7 +63,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   const submitAnswer = async () => {
     const index = current;
@@ -74,6 +75,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
       p_team_id: teamId,
       p_question: index + 1,
       p_answer: answer,
+      p_pin: teamPin,
     });
     setSubmitting(false);
     if (rpcError) {
@@ -140,6 +142,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
             <input
               type="text"
               className="bt-input"
+              maxLength={100}
               placeholder="Write your answer…"
               value={drafts[current]}
               onChange={e => {

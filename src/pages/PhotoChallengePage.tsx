@@ -6,6 +6,7 @@ import { PHOTO_CHALLENGE } from './photoChallenge';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   onBack: () => void;
 }
 
@@ -14,7 +15,7 @@ interface PhotoDraft {
   game: string;
 }
 
-export default function PhotoChallengePage({ teamId, onBack }: Props) {
+export default function PhotoChallengePage({ teamId, teamPin, onBack }: Props) {
   // null = the thumbnail grid; 0+ = that photo's answer screen
   const [selected, setSelected] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<PhotoDraft[]>(() =>
@@ -30,7 +31,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_photo_answers', { p_team_id: teamId })
+      .rpc('get_team_photo_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
@@ -54,7 +55,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   const updateDraft = (index: number, field: keyof PhotoDraft, value: string) => {
     setDrafts(prev => prev.map((d, i) => (i === index ? { ...d, [field]: value } : d)));
@@ -71,6 +72,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
       p_photo: index + 1,
       p_character: character,
       p_game: game,
+      p_pin: teamPin,
     });
     setSubmitting(false);
     if (rpcError) {
@@ -117,6 +119,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
             id={`photo-${i}-character`}
             type="text"
             className="game-input"
+            maxLength={100}
             placeholder="Character name…"
             value={drafts[i].character}
             onChange={e => updateDraft(i, 'character', e.target.value)}
@@ -125,6 +128,7 @@ export default function PhotoChallengePage({ teamId, onBack }: Props) {
             id={`photo-${i}-game`}
             type="text"
             className="game-input"
+            maxLength={100}
             placeholder="Game name…"
             value={drafts[i].game}
             onChange={e => updateDraft(i, 'game', e.target.value)}

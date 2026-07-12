@@ -18,24 +18,29 @@ export default function AdminLogin({ onLogin, onBack }: Props) {
     setLoading(true);
     setError('');
 
-    const { data: isValid, error: rpcError } = await supabase.rpc('verify_admin_passphrase', {
-      p_passphrase: passphrase,
-    });
+    // Sign in first, then claim admin rights with the passphrase: the server
+    // records the claim against this session's uid, and every admin RLS
+    // policy checks that record (an anonymous session alone grants nothing).
+    const { error: authError } = await supabase.auth.signInAnonymously();
 
-    if (rpcError || !isValid) {
+    if (authError) {
       setLoading(false);
       sfx.playError();
-      setError('You Shall not Pass!');
+      setError(authError.message);
       return;
     }
 
-    const { error: authError } = await supabase.auth.signInAnonymously();
+    const { data: claimed, error: rpcError } = await supabase.rpc('claim_admin', {
+      p_passphrase: passphrase,
+    });
 
     setLoading(false);
 
-    if (authError) {
+    if (rpcError || !claimed) {
+      // Don't leave a useless anonymous session behind.
+      await supabase.auth.signOut();
       sfx.playError();
-      setError(authError.message);
+      setError('You Shall not Pass!');
       return;
     }
 

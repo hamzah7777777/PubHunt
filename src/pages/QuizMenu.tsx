@@ -6,12 +6,13 @@ import { QUESTIONS_PER_QUIZ, QUIZ_COUNT } from './quiz';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   route: string;
   /** 1..QUIZ_COUNT opens that quiz. */
   onSelect: (quizNumber: number) => void;
 }
 
-export default function QuizMenu({ teamId, route, onSelect }: Props) {
+export default function QuizMenu({ teamId, teamPin, route, onSelect }: Props) {
   // Answered question counts per quiz for the progress fractions;
   // null until the fetch completes (the fractions just don't show).
   const [counts, setCounts] = useState<number[] | null>(null);
@@ -19,7 +20,7 @@ export default function QuizMenu({ teamId, route, onSelect }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_quiz_answers', { p_team_id: teamId })
+      .rpc('get_team_quiz_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error }) => {
         if (cancelled || error) return;
         const answered = Array.from({ length: QUIZ_COUNT }, () => new Set<number>());
@@ -34,7 +35,7 @@ export default function QuizMenu({ teamId, route, onSelect }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   return (
     <div className="flex flex-col gap-24 scale-up-anim">

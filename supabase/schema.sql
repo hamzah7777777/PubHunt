@@ -33,6 +33,53 @@ create table if not exists participants (
 create index if not exists participants_team_id_idx on participants(team_id);
 
 -- ============================================================
+-- ADMIN GATE
+-- ============================================================
+-- Being `authenticated` does NOT mean being an admin: the admin login flow
+-- is signInAnonymously() + claim_admin(passphrase) (see
+-- admin_passphrase.sql), which records the session's uid here. Every admin
+-- RLS policy checks is_admin() instead of trusting the authenticated role.
+
+create table if not exists admin_users (
+  user_id uuid primary key,
+  claimed_at timestamptz not null default now()
+);
+
+-- RLS on with no policies: nothing can touch this table except SECURITY
+-- DEFINER functions and the SQL editor.
+alter table admin_users enable row level security;
+
+create or replace function is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from admin_users where user_id = auth.uid());
+$$;
+
+grant execute on function is_admin() to authenticated;
+grant execute on function is_admin() to anon;
+
+-- ============================================================
+-- TEAM PIN HELPER
+-- ============================================================
+-- Every team RPC (see the challenge SQL files) passes the caller's PIN and
+-- verifies it with this, so a (publicly listable) team id alone grants
+-- nothing. Only called inside SECURITY DEFINER functions; no grants needed.
+
+create or replace function team_pin_ok(p_team_id uuid, p_pin text)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from teams where id = p_team_id and pin = p_pin);
+$$;
+
+-- ============================================================
 -- CLEANUP — removed team-photo + live-feed features (July 2026)
 -- ============================================================
 -- Drops everything those features created, so re-running this script
@@ -67,15 +114,15 @@ drop policy if exists "admins full access to teams" on teams;
 create policy "admins full access to teams"
   on teams for all
   to authenticated
-  using (true)
-  with check (true);
+  using (is_admin())
+  with check (is_admin());
 
 drop policy if exists "admins full access to participants" on participants;
 create policy "admins full access to participants"
   on participants for all
   to authenticated
-  using (true)
-  with check (true);
+  using (is_admin())
+  with check (is_admin());
 
 -- Public list of team names only (no PINs), so the team login screen can
 -- show a dropdown without exposing anything sensitive.

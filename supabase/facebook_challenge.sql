@@ -18,15 +18,16 @@ create table if not exists facebook_marks (
 );
 
 -- Same model as the answer tables: no anon access (no policy for anon),
--- admins get full access. Only admins ever read or write this table.
+-- admins (is_admin(), see schema.sql) get full access. Only admins ever
+-- read or write this table.
 alter table facebook_marks enable row level security;
 
 drop policy if exists "admins full access to facebook_marks" on facebook_marks;
 create policy "admins full access to facebook_marks"
   on facebook_marks for all
   to authenticated
-  using (true)
-  with check (true);
+  using (is_admin())
+  with check (is_admin());
 
 -- Live sync between markers (same as supabase/realtime.sql).
 alter publication supabase_realtime add table facebook_marks;

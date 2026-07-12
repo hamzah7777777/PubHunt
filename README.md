@@ -24,4 +24,6 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the site
 
 ## Database
 
-Schema and the admin-passphrase RPC live in `supabase/schema.sql` and `supabase/admin_passphrase.sql`.
+Schema and the admin-passphrase login live in `supabase/schema.sql` and `supabase/admin_passphrase.sql`; each challenge has its own SQL file alongside them. For a fresh project, run `schema.sql`, then `admin_passphrase.sql`, then the challenge files.
+
+`supabase/security_hardening.sql` is a one-shot migration that brings an existing database up to the current security model (admin gate via `claim_admin`/`is_admin`, PIN-checked team RPCs, answer length caps). Deploy it together with the matching client build — old clients can't call the new RPC signatures and vice versa.

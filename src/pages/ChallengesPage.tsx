@@ -24,6 +24,7 @@ export type ChallengeSubpage = 'clash' | 'photo' | 'anagram' | 'console' | 'brai
 
 interface Props {
   teamId: string;
+  teamPin: string;
   subpage: ChallengeSubpage;
   onSubpageChange: (page: ChallengeSubpage) => void;
 }
@@ -48,7 +49,7 @@ function countAnswered(rows: unknown[] | null, field: string, total: number): nu
   return done.size;
 }
 
-export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Props) {
+export default function ChallengesPage({ teamId, teamPin, subpage, onSubpageChange }: Props) {
   // Answered counts per challenge for the menu's progress fractions;
   // null until the fetch completes (the fractions just don't show).
   const [counts, setCounts] = useState<Record<ChallengeKey, number> | null>(null);
@@ -61,13 +62,13 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
     if (subpage !== null) return;
     let cancelled = false;
     Promise.all([
-      supabase.rpc('get_team_photo_answers', { p_team_id: teamId }),
-      supabase.rpc('get_team_anagram_answers', { p_team_id: teamId }),
-      supabase.rpc('get_team_console_answers', { p_team_id: teamId }),
-      supabase.rpc('get_team_brain_training_answers', { p_team_id: teamId }),
-      supabase.rpc('get_team_missing_vowels_answers', { p_team_id: teamId }),
-      supabase.rpc('get_clash_targets', { p_team_id: teamId }),
-      supabase.rpc('get_team_clash_answers', { p_team_id: teamId }),
+      supabase.rpc('get_team_photo_answers', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_anagram_answers', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_console_answers', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_brain_training_answers', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_missing_vowels_answers', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_clash_targets', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_clash_answers', { p_team_id: teamId, p_pin: teamPin }),
     ]).then(([photo, anagram, consoles, brain, vowels, clashTargets, clashAnswers]) => {
       if (cancelled) return;
       const targetIds = new Set<string>(
@@ -90,7 +91,7 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
     return () => {
       cancelled = true;
     };
-  }, [teamId, subpage]);
+  }, [teamId, teamPin, subpage]);
 
   const openSubpage = (page: ChallengeSubpage) => {
     sfx.playClick();
@@ -98,27 +99,27 @@ export default function ChallengesPage({ teamId, subpage, onSubpageChange }: Pro
   };
 
   if (subpage === 'clash') {
-    return <TeamClashChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <TeamClashChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'photo') {
-    return <PhotoChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <PhotoChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'anagram') {
-    return <AnagramChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <AnagramChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'console') {
-    return <ConsoleChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <ConsoleChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'brain') {
-    return <BrainTrainingChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <BrainTrainingChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   if (subpage === 'vowels') {
-    return <MissingVowelsChallengePage teamId={teamId} onBack={() => onSubpageChange(null)} />;
+    return <MissingVowelsChallengePage teamId={teamId} teamPin={teamPin} onBack={() => onSubpageChange(null)} />;
   }
 
   const clashDone = counts?.clash;

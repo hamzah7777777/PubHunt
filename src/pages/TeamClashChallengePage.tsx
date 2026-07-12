@@ -6,6 +6,7 @@ import { FALLBACK_COVER, getCoverMap } from '../lib/covers';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   onBack: () => void;
 }
 
@@ -19,7 +20,7 @@ interface ClashAnswer {
   is_correct: boolean | null;
 }
 
-export default function TeamClashChallengePage({ teamId, onBack }: Props) {
+export default function TeamClashChallengePage({ teamId, teamPin, onBack }: Props) {
   const [targets, setTargets] = useState<ClashTarget[]>([]);
   // Saved answer per rival team id, so tiles can show a submitted state.
   const [answers, setAnswers] = useState<Map<string, ClashAnswer>>(new Map());
@@ -33,8 +34,8 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      supabase.rpc('get_clash_targets', { p_team_id: teamId }),
-      supabase.rpc('get_team_clash_answers', { p_team_id: teamId }),
+      supabase.rpc('get_clash_targets', { p_team_id: teamId, p_pin: teamPin }),
+      supabase.rpc('get_team_clash_answers', { p_team_id: teamId, p_pin: teamPin }),
       getCoverMap(),
     ]).then(([targetsRes, answersRes, covers]) => {
       if (cancelled) return;
@@ -56,7 +57,7 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   const coverFor = (theme: string) => coverMap.get(theme.trim().toLowerCase()) ?? FALLBACK_COVER;
 
@@ -82,6 +83,7 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
       p_team_id: teamId,
       p_target_team_id: selected.team_id,
       p_answer: answer,
+      p_pin: teamPin,
     });
     setSubmitting(false);
     if (rpcError) {
@@ -180,6 +182,7 @@ export default function TeamClashChallengePage({ teamId, onBack }: Props) {
             <input
               type="text"
               className="game-input"
+              maxLength={100}
               placeholder="Their team name…"
               value={draft}
               onChange={e => setDraft(e.target.value)}

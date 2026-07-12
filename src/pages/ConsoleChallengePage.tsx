@@ -6,10 +6,11 @@ import { CONSOLE_CHALLENGE } from './consoleChallenge';
 
 interface Props {
   teamId: string;
+  teamPin: string;
   onBack: () => void;
 }
 
-export default function ConsoleChallengePage({ teamId, onBack }: Props) {
+export default function ConsoleChallengePage({ teamId, teamPin, onBack }: Props) {
   // null = the thumbnail grid; 0+ = that console's answer screen
   const [selected, setSelected] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<string[]>(() => CONSOLE_CHALLENGE.map(() => ''));
@@ -23,7 +24,7 @@ export default function ConsoleChallengePage({ teamId, onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .rpc('get_team_console_answers', { p_team_id: teamId })
+      .rpc('get_team_console_answers', { p_team_id: teamId, p_pin: teamPin })
       .then(({ data, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
@@ -45,7 +46,7 @@ export default function ConsoleChallengePage({ teamId, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, teamPin]);
 
   const submitAnswer = async (index: number) => {
     const answer = drafts[index].trim();
@@ -56,6 +57,7 @@ export default function ConsoleChallengePage({ teamId, onBack }: Props) {
       p_team_id: teamId,
       p_console: index + 1,
       p_answer: answer,
+      p_pin: teamPin,
     });
     setSubmitting(false);
     if (rpcError) {
@@ -100,6 +102,7 @@ export default function ConsoleChallengePage({ teamId, onBack }: Props) {
             id={`console-${i}-answer`}
             type="text"
             className="game-input"
+            maxLength={100}
             placeholder="Console name…"
             value={drafts[i]}
             onChange={e => setDrafts(prev => prev.map((d, j) => (j === i ? e.target.value : d)))}
