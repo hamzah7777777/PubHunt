@@ -25,9 +25,9 @@ export const ROUTE_QUIZZES: Record<'A' | 'B', string[][]> = {
       'Which artist painted the lioness in Tudor Square?',
     ],
     [
-      'Question to be confirmed',
-      'Question to be confirmed',
-      'Question to be confirmed',
+      'What toy can be found by the fire escape?',
+      'What is the 3rd definition?',
+      'How many red cans are lined up against the wall?',
     ],
   ],
   B: [
@@ -60,7 +60,7 @@ export const ROUTE_QUIZ_ANSWERS: Record<'A' | 'B', string[][]> = {
     ['7', 'Fire Station', 'Mexico City International, Sydney Kingsford Smith and London Heathrow'],
     ['8', 'The tables', 'Run club'],
     ['Wednesday', 'Ale', "Lisa O'Hara"],
-    ['TBC', 'TBC', 'TBC'],
+    ['Pull along giraffe', 'A groove or vibe', '53'],
   ],
   B: [
     ['20%', '5', 'Best Bar/Late Bar'],

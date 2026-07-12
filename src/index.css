@@ -416,6 +416,17 @@ p {
 }
 .mute-btn:hover { background: var(--brand-strong); }
 
+/* Support button — icon plus label */
+.support-btn {
+  width: auto;
+  gap: 6px;
+  padding: 0 10px;
+  text-decoration: none;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
 /* ----------------------------------------------------------
    MAIN SCROLLABLE CONTENT AREA
    ---------------------------------------------------------- */

@@ -201,7 +201,7 @@ export default function App() {
             </button>
           )}
           <a
-            className="mute-btn"
+            className="mute-btn support-btn"
             href="https://chat.whatsapp.com/Dbhq8V1wPaELGDZt24JPAE?s=cl&p=a&ilr=1"
             target="_blank"
             rel="noreferrer"
@@ -210,6 +210,7 @@ export default function App() {
             title="Support (WhatsApp group)"
           >
             <LifeBuoy size={18} />
+            <span>Support</span>
           </a>
           <button className="mute-btn" onClick={toggleMute} aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}>
             {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -251,7 +252,11 @@ export default function App() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.6-1.5h1.4V5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8V11H8.2v3h2.4v7h2.9Z" />
                 </svg>
-                Pub Hunt 2026 Facebook Group
+                <span style={{ textAlign: 'center', lineHeight: 1.4 }}>
+                  Pub Hunt 2026
+                  <br />
+                  Facebook Group
+                </span>
               </a>
             </div>
           )}
