@@ -1,6 +1,7 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { ClipboardCheck, Download, LogOut, Plus, QrCode, Search, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { ClipboardCheck, Download, ImagePlus, LogOut, Plus, QrCode, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fileToCoverBlob, getCoverMap, resolveCover } from '../lib/covers';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
 import {
@@ -85,6 +86,9 @@ export default function AdminDashboard({ onLogout }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [coverMap, setCoverMap] = useState<Map<string, string>>(new Map());
+  const [coverBusy, setCoverBusy] = useState(false);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   // All the marking lives on its own page; the dashboard has the rest.
   const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
   const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'qr'>('teams');
@@ -105,6 +109,9 @@ export default function AdminDashboard({ onLogout }: Props) {
           supabase.from('team_clash_answers').select('*').order('submitted_at'),
           supabase.from('facebook_marks').select('*'),
         ]);
+      // Theme-based fallback covers, so the modal can preview what a team
+      // without a custom cover currently shows.
+      getCoverMap().then(setCoverMap);
 
       if (
         teamsRes.error ||
@@ -230,8 +237,53 @@ export default function AdminDashboard({ onLogout }: Props) {
     onLogout();
   };
 
-  const updateTeamField = (teamId: string, field: keyof AdminTeam, value: string) => {
+  const updateTeamField = (teamId: string, field: keyof AdminTeam, value: string | null) => {
     setTeams(prev => prev.map(t => (t.id === teamId ? { ...t, [field]: value } : t)));
+  };
+
+  // One cover object per team ({id}.webp, or {id}.jpg on browsers that
+  // can't encode webp), upserted in the public 'game-covers' bucket. The
+  // stored URL gets a ?v= stamp so replacing the file busts caches.
+  const uploadCover = async (team: AdminTeam, file: File) => {
+    setCoverBusy(true);
+    setError('');
+    try {
+      const { blob, ext } = await fileToCoverBlob(file);
+      const path = `${team.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('game-covers')
+        .upload(path, blob, { upsert: true, contentType: blob.type });
+      if (uploadError) throw new Error(`${uploadError.message}. Has team_covers.sql been run?`);
+      // If the encoding flipped webp<->jpg, tidy up the other variant.
+      await supabase.storage.from('game-covers').remove([`${team.id}.${ext === 'webp' ? 'jpg' : 'webp'}`]);
+      const { publicUrl } = supabase.storage.from('game-covers').getPublicUrl(path).data;
+      const coverUrl = `${publicUrl}?v=${Date.now()}`;
+      const { error: saveError } = await supabase
+        .from('teams')
+        .update({ cover_url: coverUrl })
+        .eq('id', team.id);
+      if (saveError) throw new Error(saveError.message);
+      updateTeamField(team.id, 'cover_url', coverUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not upload the cover.');
+    }
+    setCoverBusy(false);
+  };
+
+  const removeCover = async (team: AdminTeam) => {
+    setCoverBusy(true);
+    setError('');
+    const { error: saveError } = await supabase
+      .from('teams')
+      .update({ cover_url: null })
+      .eq('id', team.id);
+    if (saveError) {
+      setError(saveError.message);
+    } else {
+      await supabase.storage.from('game-covers').remove([`${team.id}.webp`, `${team.id}.jpg`]);
+      updateTeamField(team.id, 'cover_url', null);
+    }
+    setCoverBusy(false);
   };
 
   const saveTeam = async (team: AdminTeam) => {
@@ -607,9 +659,17 @@ export default function AdminDashboard({ onLogout }: Props) {
                         className="admin-team-card"
                         onClick={() => setEditingTeamId(team.id)}
                       >
-                        <div className="admin-card-main">
-                          <span className="admin-card-name">{team.name}</span>
-                          <span className="admin-card-theme">{team.game_theme}</span>
+                        <div className="admin-card-lead">
+                          <img
+                            className="admin-card-cover"
+                            src={resolveCover(team.cover_url, team.game_theme, coverMap)}
+                            alt=""
+                            loading="lazy"
+                          />
+                          <div className="admin-card-main">
+                            <span className="admin-card-name">{team.name}</span>
+                            <span className="admin-card-theme">{team.game_theme}</span>
+                          </div>
                         </div>
                         <div className="admin-card-meta">
                           <span className={`admin-chip admin-chip-${team.status}`}>
@@ -739,6 +799,52 @@ export default function AdminDashboard({ onLogout }: Props) {
                   onBlur={() => saveTeam(editingTeam)}
                 />
               </label>
+
+              <div className="admin-label admin-label-wide">
+                Game cover
+                <div className="admin-cover-row">
+                  <img
+                    className="admin-cover-preview"
+                    src={resolveCover(editingTeam.cover_url, editingTeam.game_theme, coverMap)}
+                    alt={`Cover for ${editingTeam.game_theme}`}
+                  />
+                  <div className="admin-cover-actions">
+                    <span className="admin-cover-hint">
+                      {editingTeam.cover_url
+                        ? 'Custom cover'
+                        : 'Default cover for this theme'}
+                    </span>
+                    <button
+                      className="admin-btn"
+                      onClick={() => coverFileRef.current?.click()}
+                      disabled={coverBusy}
+                    >
+                      <ImagePlus size={14} />{' '}
+                      {coverBusy ? 'Working…' : editingTeam.cover_url ? 'Replace cover' : 'Upload cover'}
+                    </button>
+                    {editingTeam.cover_url && (
+                      <button
+                        className="admin-btn"
+                        onClick={() => removeCover(editingTeam)}
+                        disabled={coverBusy}
+                      >
+                        <Trash2 size={13} /> Use default
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <input
+                  ref={coverFileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file) uploadCover(editingTeam, file);
+                  }}
+                />
+              </div>
 
               <label className="admin-label">
                 Status

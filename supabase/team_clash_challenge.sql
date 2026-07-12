@@ -44,20 +44,21 @@ create policy "admins full access to team_clash_answers"
 -- (publicly listable) team id alone grants nothing.
 
 -- The rival teams a team has to identify: every other team across both
--- routes (withdrawn teams excluded). Only the cover theme is exposed — the
+-- routes (withdrawn teams excluded). Only the cover/theme is exposed — the
 -- team name is the answer.
 drop function if exists get_clash_targets(uuid);
 drop function if exists get_clash_targets(uuid, text);
 create or replace function get_clash_targets(p_team_id uuid, p_pin text)
 returns table (
   team_id uuid,
-  game_theme text
+  game_theme text,
+  cover_url text
 )
 language sql
 security definer
 set search_path = public
 as $$
-  select t.id, t.game_theme
+  select t.id, t.game_theme, t.cover_url
   from teams t
   where t.id <> p_team_id
     and t.status <> 'withdrawn'

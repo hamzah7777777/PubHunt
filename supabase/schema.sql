@@ -14,11 +14,15 @@ create table if not exists teams (
   pin text not null,
   status text not null default 'confirmed' check (status in ('confirmed', 'tbc', 'withdrawn')),
   route text not null default 'A' check (route in ('A', 'B')),
+  -- Admin-uploaded cover image (see team_covers.sql); null falls back to
+  -- the static theme-based cover in public/covers/.
+  cover_url text,
   created_at timestamptz not null default now()
 );
 
--- Safe to re-run against an existing database that predates this column.
+-- Safe to re-run against an existing database that predates these columns.
 alter table teams add column if not exists route text not null default 'A' check (route in ('A', 'B'));
+alter table teams add column if not exists cover_url text;
 
 create table if not exists participants (
   id uuid primary key default gen_random_uuid(),
@@ -137,7 +141,7 @@ create policy "anon can list team names"
 -- from teams`, we revoke column-level access to pin/status for anon instead
 -- of relying on RLS alone.
 revoke select on teams from anon;
-grant select (id, name, game_theme) on teams to anon;
+grant select (id, name, game_theme, cover_url) on teams to anon;
 
 -- ============================================================
 -- TEAM PIN VERIFICATION RPC

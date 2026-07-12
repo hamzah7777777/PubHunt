@@ -34,6 +34,8 @@ export interface AdminTeam {
   pin: string;
   status: string;
   route: string;
+  // Admin-uploaded cover image; null falls back to the theme-based cover.
+  cover_url: string | null;
   created_at: string;
 }
 

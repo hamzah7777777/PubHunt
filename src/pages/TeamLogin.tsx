@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
-import { FALLBACK_COVER, getCoverMap } from '../lib/covers';
+import { getCoverMap, resolveCover } from '../lib/covers';
 import type { TeamSession } from '../types';
 
 interface TeamOption {
   id: string;
   name: string;
   game_theme: string;
+  cover_url: string | null;
   captain_name: string;
 }
 
@@ -29,7 +30,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('teams').select('id,name,game_theme').order('name'),
+      supabase.from('teams').select('id,name,game_theme,cover_url').order('name'),
       supabase.rpc('list_team_captains'),
       getCoverMap(),
     ]).then(([teamsRes, captainsRes, covers]) => {
@@ -41,7 +42,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
           captainByTeam.set(c.team_id, c.captain_name);
         });
         setTeams(
-          teamsRes.data.map((t: { id: string; name: string; game_theme: string }) => ({
+          teamsRes.data.map((t: { id: string; name: string; game_theme: string; cover_url: string | null }) => ({
             ...t,
             captain_name: captainByTeam.get(t.id) || t.name,
           })),
@@ -52,7 +53,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
     });
   }, []);
 
-  const coverFor = (theme: string) => coverMap.get(theme.trim().toLowerCase()) ?? FALLBACK_COVER;
+  const coverFor = (team: TeamOption) => resolveCover(team.cover_url, team.game_theme, coverMap);
 
   const filteredTeams = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -113,7 +114,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
         </button>
 
         <div className="panel panel-secondary text-center cover-reveal">
-          <img src={coverFor(selectedTeam.game_theme)} alt={selectedTeam.game_theme} className="cover-reveal-img" />
+          <img src={coverFor(selectedTeam)} alt={selectedTeam.game_theme} className="cover-reveal-img" />
           <span className="kicker" style={{ marginTop: 16 }}>{selectedTeam.game_theme}</span>
           <h2 style={{ color: 'var(--fg-purple-strong)', marginBottom: 16 }}>{selectedTeam.captain_name}</h2>
 
@@ -179,7 +180,7 @@ export default function TeamLogin({ onLogin, onBack }: Props) {
         <div className="cover-grid">
           {filteredTeams.map(t => (
             <button key={t.id} type="button" className="cover-tile" onClick={() => selectTeam(t)} aria-label={`Select game ${t.game_theme}`}>
-              <img src={coverFor(t.game_theme)} alt={t.game_theme} loading="lazy" />
+              <img src={coverFor(t)} alt={t.game_theme} loading="lazy" />
               <span className="cover-tile-name">{t.game_theme}</span>
             </button>
           ))}

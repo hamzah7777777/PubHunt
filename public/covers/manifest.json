@@ -62,6 +62,7 @@
   { "theme": "Super Mario Bros", "slug": "super-mario-bros", "file": "covers/super-mario-bros.webp", "source": "https://en.wikipedia.org/wiki/Super_Mario_Bros." },
   { "theme": "Teenage Mutant Ninja Turtles", "slug": "teenage-mutant-ninja-turtles", "file": "covers/teenage-mutant-ninja-turtles.webp", "source": "https://en.wikipedia.org/wiki/Teenage_Mutant_Ninja_Turtles_(1987_TV_series)" },
   { "theme": "Temple Run", "slug": "temple-run", "file": "covers/temple-run.webp", "source": "https://en.wikipedia.org/wiki/Temple_Run" },
+  { "theme": "Tetris", "slug": "tetris", "file": "covers/tetris.webp", "source": "supplied by organiser" },
   { "theme": "The Secret of Monkey Island", "slug": "the-secret-of-monkey-island", "file": "covers/the-secret-of-monkey-island.webp", "source": "https://en.wikipedia.org/wiki/The_Secret_of_Monkey_Island" },
   { "theme": "The Sims", "slug": "the-sims", "file": "covers/the-sims.webp", "source": "https://en.wikipedia.org/wiki/The_Sims_(video_game)" },
   { "theme": "The Witcher", "slug": "the-witcher", "file": "covers/the-witcher.webp", "source": "supplied by organiser" },

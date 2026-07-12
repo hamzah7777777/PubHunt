@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Send, Swords, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
-import { FALLBACK_COVER, getCoverMap } from '../lib/covers';
+import { getCoverMap, resolveCover } from '../lib/covers';
 
 interface Props {
   teamId: string;
@@ -13,6 +13,7 @@ interface Props {
 interface ClashTarget {
   team_id: string;
   game_theme: string;
+  cover_url: string | null;
 }
 
 interface ClashAnswer {
@@ -59,7 +60,7 @@ export default function TeamClashChallengePage({ teamId, teamPin, onBack }: Prop
     };
   }, [teamId, teamPin]);
 
-  const coverFor = (theme: string) => coverMap.get(theme.trim().toLowerCase()) ?? FALLBACK_COVER;
+  const coverFor = (target: ClashTarget) => resolveCover(target.cover_url, target.game_theme, coverMap);
 
   const openTarget = (target: ClashTarget) => {
     sfx.playClick();
@@ -139,7 +140,7 @@ export default function TeamClashChallengePage({ teamId, teamPin, onBack }: Prop
               onClick={() => openTarget(t)}
               aria-label={`Name the team playing as ${t.game_theme}${answers.has(t.team_id) ? ' (answered)' : ''}`}
             >
-              <img src={coverFor(t.game_theme)} alt={t.game_theme} loading="lazy" />
+              <img src={coverFor(t)} alt={t.game_theme} loading="lazy" />
               <span className="cover-tile-name">{t.game_theme}</span>
               {answers.has(t.team_id) && (
                 <span className="cover-tile-done">
@@ -169,7 +170,7 @@ export default function TeamClashChallengePage({ teamId, teamPin, onBack }: Prop
               <X size={16} />
             </button>
             <img
-              src={coverFor(selected.game_theme)}
+              src={coverFor(selected)}
               alt={selected.game_theme}
               style={{ width: '60%', margin: '0 auto', display: 'block' }}
             />
