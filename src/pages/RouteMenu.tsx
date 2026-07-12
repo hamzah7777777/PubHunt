@@ -103,8 +103,8 @@ export default function RouteMenu({ teamId, teamPin, route, hints, onSelectHint,
               {i < QUIZ_COUNT && (
                 <button
                   type="button"
-                  className={`btn ${complete ? 'btn-success' : 'btn-secondary'} btn-lg`}
-                  style={{ minHeight: 56, width: 'calc(100% - 28px)', alignSelf: 'flex-end', justifyContent: 'space-between' }}
+                  className={`btn ${complete ? 'btn-success' : 'btn-secondary'} btn-block btn-lg`}
+                  style={{ minHeight: 56, justifyContent: 'space-between' }}
                   onClick={() => {
                     sfx.playClick();
                     onSelectQuiz(i + 1);
