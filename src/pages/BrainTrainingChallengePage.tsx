@@ -10,15 +10,10 @@ interface Props {
   onBack: () => void;
 }
 
-const FACES = [
-  '/braintrainer/braintrainer1.png',
-  '/braintrainer/braintrainer2.png',
-  '/braintrainer/braintrainer3.png',
-  '/braintrainer/braintrainer4.png',
-  '/braintrainer/braintrainer5.png',
-  '/braintrainer/braintrainer6.png',
-  '/braintrainer/braintrainer7.png',
-];
+// All the professor faces in public/braintrainer — bump the count when
+// adding braintrainer<N+1>.png to the folder.
+const FACE_COUNT = 17;
+const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.png`);
 
 export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
   const [drafts, setDrafts] = useState<string[]>(() => BRAIN_TRAINING_CHALLENGE.map(() => ''));
@@ -29,12 +24,18 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  // Counts every tap on the screen and every keystroke in the answer box;
-  // the professor's expression is reactions % FACES.length, and the counter
-  // doubles as the animation key so his "pop" replays each time without
-  // him moving.
+  // Every tap on the screen and every keystroke in the answer box swaps
+  // the professor to a random different face; the counter doubles as the
+  // animation key so his "pop" replays each time without him moving.
   const [reactions, setReactions] = useState(0);
-  const react = () => setReactions(r => r + 1);
+  const [face, setFace] = useState(0);
+  const react = () => {
+    setReactions(r => r + 1);
+    setFace(prev => {
+      const next = Math.floor(Math.random() * (FACES.length - 1));
+      return next >= prev ? next + 1 : next;
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -130,7 +131,7 @@ export default function BrainTrainingChallengePage({ teamId, onBack }: Props) {
                     src={src}
                     alt=""
                     draggable={false}
-                    className={reactions % FACES.length === i ? 'bt-face-on' : undefined}
+                    className={face === i ? 'bt-face-on' : undefined}
                   />
                 ))}
               </div>
