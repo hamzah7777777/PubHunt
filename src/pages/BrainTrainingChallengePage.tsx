@@ -12,9 +12,9 @@ interface Props {
 }
 
 // All the professor faces in public/braintrainer — bump the count when
-// adding braintrainer<N+1>.png to the folder.
+// adding braintrainer<N+1>.webp to the folder.
 const FACE_COUNT = 17;
-const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.png`);
+const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.webp`);
 
 export default function BrainTrainingChallengePage({ teamId, teamPin, onBack }: Props) {
   const [drafts, setDrafts] = useState<string[]>(() => BRAIN_TRAINING_CHALLENGE.map(() => ''));
