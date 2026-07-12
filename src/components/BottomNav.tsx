@@ -1,7 +1,9 @@
-import { Compass, Gamepad2, ListChecks, Users } from 'lucide-react';
+import { Compass, Gamepad2, Users } from 'lucide-react';
 import { sfx } from '../lib/sfx';
 
-export type AppTab = 'team' | 'hints' | 'quiz' | 'challenges';
+// 'hints' hosts the merged route page: pub hints interleaved with each
+// pub's questions (the old separate Route Quiz tab).
+export type AppTab = 'team' | 'hints' | 'challenges';
 
 interface Props {
   active: AppTab;
@@ -10,8 +12,7 @@ interface Props {
 
 const TABS: { id: AppTab; label: string; icon: typeof Users }[] = [
   { id: 'team', label: 'Team', icon: Users },
-  { id: 'hints', label: 'Hints', icon: Compass },
-  { id: 'quiz', label: 'Route Quiz', icon: ListChecks },
+  { id: 'hints', label: 'Route', icon: Compass },
   { id: 'challenges', label: 'Trivia Quiz', icon: Gamepad2 },
 ];
 

@@ -8,8 +8,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import BottomNav, { type AppTab } from './components/BottomNav';
 import InstructionsPanel from './components/InstructionsPanel';
-import HintsMenu from './pages/HintsMenu';
-import QuizMenu from './pages/QuizMenu';
+import RouteMenu from './pages/RouteMenu';
 import QuizPage from './pages/QuizPage';
 import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
@@ -19,6 +18,7 @@ import HintAmongUs from './pages/pub hints/HintAmongUs';
 import HintMinecraft from './pages/pub hints/HintMinecraft';
 import HintBlackOps from './pages/pub hints/HintBlackOps';
 import { FINISH_HINT, ROUTE_HINTS } from './pages/hints';
+import { QUIZ_COUNT } from './pages/quiz';
 import type { TeamSession } from './types';
 import './App.css';
 
@@ -67,7 +67,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>(() => {
     if (deepLink !== null && localStorage.getItem('pubhunt_team_session')) return 'hints';
     const saved = localStorage.getItem('pubhunt_active_tab');
-    return saved === 'hints' || saved === 'quiz' || saved === 'challenges' ? saved : 'team';
+    // 'quiz' was its own tab before it merged into the route page.
+    if (saved === 'quiz') return 'hints';
+    return saved === 'hints' || saved === 'challenges' ? saved : 'team';
   });
   // null = the hints menu; 0 = the start point page; 1+ = that hint page
   const [hintIndex, setHintIndex] = useState<number | null>(() => {
@@ -77,12 +79,12 @@ export default function App() {
     const n = Number(saved);
     return Number.isInteger(n) && n >= 0 && n <= HINT_SHELLS.length ? n : null;
   });
-  // null = the quiz menu; 1..5 = that quiz page
+  // null = the route menu; 1..QUIZ_COUNT = that pub's questions page
   const [quizNumber, setQuizNumber] = useState<number | null>(() => {
     const saved = localStorage.getItem('pubhunt_quiz_number');
     if (saved === null) return null;
     const n = Number(saved);
-    return Number.isInteger(n) && n >= 1 && n <= 5 ? n : null;
+    return Number.isInteger(n) && n >= 1 && n <= QUIZ_COUNT ? n : null;
   });
   // null = the challenges menu; otherwise that challenge's page. A refresh
   // shouldn't kick the team back to the menu if they were mid challenge.
@@ -156,9 +158,19 @@ export default function App() {
 
   const handleTabChange = (tab: AppTab) => {
     setActiveTab(tab);
-    if (tab === 'hints') setHintIndex(null);
-    if (tab === 'quiz') setQuizNumber(null);
+    if (tab === 'hints') {
+      setHintIndex(null);
+      setQuizNumber(null);
+    }
     if (tab === 'challenges') setChallengeSubpage(null);
+  };
+
+  // Back to the merged route menu: both sub-pages closed. (A deep link can
+  // leave a stale quizNumber behind the hint page it opens — clearing both
+  // means "back" always lands on the menu, never a surprise quiz page.)
+  const openRouteMenu = () => {
+    setHintIndex(null);
+    setQuizNumber(null);
   };
 
   const handleAdminLogin = () => {
@@ -282,21 +294,37 @@ export default function App() {
             <TeamPortal session={teamSession} onLogout={handleTeamLogout} />
           )}
 
-          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === null && (
-            <HintsMenu route={teamRoute} hints={hintList} onSelect={setHintIndex} />
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === null && quizNumber === null && (
+            <RouteMenu
+              teamId={teamSession.team_id}
+              teamPin={teamSession.pin ?? ''}
+              route={teamRoute}
+              hints={hintList}
+              onSelectHint={setHintIndex}
+              onSelectQuiz={setQuizNumber}
+            />
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === 0 && (
-            <StartHsbc onBack={() => setHintIndex(null)} onNext={() => setHintIndex(1)} />
+            <StartHsbc onBack={openRouteMenu} onNext={() => setHintIndex(1)} />
           )}
 
           {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex !== null && hintIndex > 0 && HintShell && activeHint && (
             <HintShell
               hint={activeHint.hint}
               time={activeHint.time}
-              onNext={() => setHintIndex(null)}
-              nextLabel="All Pub Hints"
-              onBack={() => setHintIndex(null)}
+              // Pubs flow hint -> that pub's questions; the finish line has
+              // no questions, so it goes back to the route menu.
+              onNext={
+                hintIndex <= QUIZ_COUNT
+                  ? () => {
+                      setHintIndex(null);
+                      setQuizNumber(hintIndex);
+                    }
+                  : openRouteMenu
+              }
+              nextLabel={hintIndex <= QUIZ_COUNT ? `Pub ${hintIndex} Questions` : 'All Stops'}
+              onBack={openRouteMenu}
             />
           )}
 
@@ -310,17 +338,13 @@ export default function App() {
             />
           )}
 
-          {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber === null && (
-            <QuizMenu teamId={teamSession.team_id} teamPin={teamSession.pin ?? ''} route={teamRoute} onSelect={setQuizNumber} />
-          )}
-
-          {view === 'team-portal' && teamSession && activeTab === 'quiz' && quizNumber !== null && (
+          {view === 'team-portal' && teamSession && activeTab === 'hints' && hintIndex === null && quizNumber !== null && (
             <QuizPage
               teamId={teamSession.team_id}
               teamPin={teamSession.pin ?? ''}
               route={teamRoute}
               quizNumber={quizNumber}
-              onBack={() => setQuizNumber(null)}
+              onBack={openRouteMenu}
             />
           )}
 
