@@ -136,18 +136,6 @@ export default function ChallengesPage({ teamId, teamPin, subpage, onSubpageChan
         </div>
       </div>
 
-      <button
-        type="button"
-        className={`btn ${clashComplete ? 'btn-success' : 'btn-primary'} btn-block btn-lg`}
-        style={{ justifyContent: 'space-between', minHeight: 72 }}
-        onClick={() => openSubpage('clash')}
-      >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6em', whiteSpace: 'normal', textAlign: 'left' }}>
-          <Swords size={20} style={{ flexShrink: 0 }} /> Team Clash : Name Your Rivals
-        </span>
-        {clashDone !== undefined && <span className="btn-count">{clashDone}/{clashTotal}</span>}
-      </button>
-
       <div className="panel">
         <div className="flex flex-col gap-12" style={{ marginBottom: 16 }}>
           <div className="flex" style={{ gap: 10, alignItems: 'flex-start' }}>
@@ -186,6 +174,18 @@ export default function ChallengesPage({ teamId, teamPin, subpage, onSubpageChan
           {facebookIcon} Open the Facebook Page
         </a>
       </div>
+
+      <button
+        type="button"
+        className={`btn ${clashComplete ? 'btn-success' : 'btn-primary'} btn-block btn-lg`}
+        style={{ justifyContent: 'space-between', minHeight: 72 }}
+        onClick={() => openSubpage('clash')}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6em', whiteSpace: 'normal', textAlign: 'left' }}>
+          <Swords size={20} style={{ flexShrink: 0 }} /> Team Clash : Name Your Rivals
+        </span>
+        {clashDone !== undefined && <span className="btn-count">{clashDone}/{clashTotal}</span>}
+      </button>
 
       {CHALLENGE_BUTTONS.map(({ page, icon: Icon, label, total }) => {
         const done = counts?.[page];
