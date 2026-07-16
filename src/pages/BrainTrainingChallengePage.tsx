@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import { allowSubmit } from '../lib/cutoff';
 import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
 import './BrainTrainingChallengePage.css';
 
@@ -66,6 +67,7 @@ export default function BrainTrainingChallengePage({ teamId, teamPin, onBack }: 
   }, [teamId, teamPin]);
 
   const submitAnswer = async () => {
+    if (!allowSubmit()) return;
     const index = current;
     const answer = drafts[index].trim();
     if (!answer) return;

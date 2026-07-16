@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import { allowSubmit } from '../lib/cutoff';
 import { ROUTE_QUIZZES } from './quiz';
 
 interface Props {
@@ -52,6 +53,7 @@ export default function QuizPage({ teamId, teamPin, route, quizNumber, onBack }:
   }, [teamId, quizNumber]);
 
   const submitAnswer = async (index: number) => {
+    if (!allowSubmit()) return;
     const answer = drafts[index].trim();
     if (!answer) return;
     setSubmitting(index);

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import { allowSubmit } from '../lib/cutoff';
 import { CONSOLE_CHALLENGE } from './consoleChallenge';
 
 interface Props {
@@ -49,6 +50,7 @@ export default function ConsoleChallengePage({ teamId, teamPin, onBack }: Props)
   }, [teamId, teamPin]);
 
   const submitAnswer = async (index: number) => {
+    if (!allowSubmit()) return;
     const answer = drafts[index].trim();
     if (!answer) return;
     setSubmitting(true);

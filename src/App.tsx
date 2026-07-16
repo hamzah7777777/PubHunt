@@ -8,6 +8,8 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import BottomNav, { type AppTab } from './components/BottomNav';
 import InstructionsPanel from './components/InstructionsPanel';
+import CutoffPopup from './components/CutoffPopup';
+import { isPastCutoff, registerCutoffPopup, SUBMISSION_CUTOFF_MS } from './lib/cutoff';
 import RouteMenu from './pages/RouteMenu';
 import QuizPage from './pages/QuizPage';
 import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
@@ -113,6 +115,27 @@ export default function App() {
     if (challengeSubpage === null) localStorage.removeItem('pubhunt_challenge_subpage');
     else localStorage.setItem('pubhunt_challenge_subpage', challengeSubpage);
   }, [challengeSubpage]);
+
+  // The 11:30pm submission-cutoff popup: pages raise it when a blocked
+  // submit is attempted (via registerCutoffPopup), and it also auto-shows
+  // once per device when the clock hits the cutoff.
+  const [cutoffPopupOpen, setCutoffPopupOpen] = useState(false);
+
+  useEffect(() => registerCutoffPopup(() => setCutoffPopupOpen(true)), []);
+
+  useEffect(() => {
+    const showOnce = () => {
+      if (localStorage.getItem('pubhunt_cutoff_seen')) return;
+      localStorage.setItem('pubhunt_cutoff_seen', '1');
+      setCutoffPopupOpen(true);
+    };
+    if (isPastCutoff()) {
+      showOnce();
+      return;
+    }
+    const timer = setTimeout(showOnce, SUBMISSION_CUTOFF_MS - Date.now());
+    return () => clearTimeout(timer);
+  }, []);
 
   // Admins keep a Supabase auth session across refreshes; remember they're
   // authed so the Host button goes straight back to the dashboard. The
@@ -364,6 +387,7 @@ export default function App() {
       </main>
     </div>
     {showBottomNav && <BottomNav active={activeTab} onChange={handleTabChange} />}
+    {cutoffPopupOpen && <CutoffPopup onClose={() => setCutoffPopupOpen(false)} />}
     </>
   );
 }

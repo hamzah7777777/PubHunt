@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Send, Swords, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
+import { allowSubmit } from '../lib/cutoff';
 import { getCoverMap, resolveCover } from '../lib/covers';
 
 interface Props {
@@ -76,6 +77,7 @@ export default function TeamClashChallengePage({ teamId, teamPin, onBack }: Prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!allowSubmit()) return;
     const answer = draft.trim();
     if (!selected || !answer) return;
     setSubmitting(true);
