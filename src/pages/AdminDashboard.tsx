@@ -4,6 +4,12 @@ import { supabase } from '../lib/supabase';
 import { fileToCoverBlob, getCoverMap, resolveCover } from '../lib/covers';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
+import { QUESTIONS_PER_QUIZ, QUIZ_COUNT } from './quiz';
+import { PHOTO_CHALLENGE } from './photoChallenge';
+import { ANAGRAM_CHALLENGE } from './anagramChallenge';
+import { CONSOLE_CHALLENGE } from './consoleChallenge';
+import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
+import { MISSING_VOWELS_CHALLENGE } from './missingVowelsChallenge';
 import {
   SECTION_KEYS,
   SECTION_LABELS,
@@ -527,10 +533,67 @@ export default function AdminDashboard({ onLogout }: Props) {
     row => row.scores.total
   );
 
-  // Mirrors the Scores table: every team in rank order with per-section
-  // points (max shown in the header where the section has a fixed max)
-  // and the overall total.
+  // Mirrors the Scores table — every team in rank order with per-section
+  // points (max shown in the header where the section has a fixed max) and
+  // the overall total — then a per-question breakdown in the far columns:
+  // 1 = marked correct, 0 = marked wrong, ? = submitted but not yet marked,
+  // blank = never submitted.
   const exportScoresCsv = () => {
+    const mark = (m: boolean | null | undefined): string | number =>
+      m === true ? 1 : m === false ? 0 : m === null ? '?' : '';
+    const range = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
+
+    const questionColumns: { header: string; cell: (teamId: string) => string | number }[] = [
+      ...teams.map(target => ({
+        header: `Clash: ${target.name}`,
+        cell: (teamId: string) =>
+          mark(clashAnswers.find(a => a.team_id === teamId && a.target_team_id === target.id)?.is_correct),
+      })),
+      ...range(QUIZ_COUNT).flatMap(quiz =>
+        range(QUESTIONS_PER_QUIZ).map(q => ({
+          header: `Pub ${quiz} Q${q}`,
+          cell: (teamId: string) =>
+            mark(
+              quizAnswers.find(
+                a => a.team_id === teamId && a.quiz_number === quiz && a.question_number === q
+              )?.is_correct
+            ),
+        }))
+      ),
+      ...range(PHOTO_CHALLENGE.length).flatMap(n => [
+        {
+          header: `Photo ${n}: Character`,
+          cell: (teamId: string) =>
+            mark(photoAnswers.find(a => a.team_id === teamId && a.photo_number === n)?.character_correct),
+        },
+        {
+          header: `Photo ${n}: Game`,
+          cell: (teamId: string) =>
+            mark(photoAnswers.find(a => a.team_id === teamId && a.photo_number === n)?.game_correct),
+        },
+      ]),
+      ...range(ANAGRAM_CHALLENGE.length).map(n => ({
+        header: `Anagram ${n}`,
+        cell: (teamId: string) =>
+          mark(anagramAnswers.find(a => a.team_id === teamId && a.anagram_number === n)?.is_correct),
+      })),
+      ...range(CONSOLE_CHALLENGE.length).map(n => ({
+        header: `Console ${n}`,
+        cell: (teamId: string) =>
+          mark(consoleAnswers.find(a => a.team_id === teamId && a.console_number === n)?.is_correct),
+      })),
+      ...range(BRAIN_TRAINING_CHALLENGE.length).map(n => ({
+        header: `Brain Q${n}`,
+        cell: (teamId: string) =>
+          mark(brainAnswers.find(a => a.team_id === teamId && a.question_number === n)?.is_correct),
+      })),
+      ...range(MISSING_VOWELS_CHALLENGE.length).map(n => ({
+        header: `Vowels ${n}`,
+        cell: (teamId: string) =>
+          mark(vowelsAnswers.find(a => a.team_id === teamId && a.puzzle_number === n)?.is_correct),
+      })),
+    ];
+
     downloadCsv('pubhunt-scores.csv', [
       [
         'Rank',
@@ -539,12 +602,14 @@ export default function AdminDashboard({ onLogout }: Props) {
           SECTION_MAX[key] !== null ? `${SECTION_LABELS[key]} (/${SECTION_MAX[key]})` : SECTION_LABELS[key]
         ),
         'Total',
+        ...questionColumns.map(c => c.header),
       ],
       ...scoreRows.map(({ team, scores, rank }) => [
         rank,
         team.name,
         ...SECTION_KEYS.map(key => scores[key]),
         scores.total,
+        ...questionColumns.map(c => c.cell(team.id)),
       ]),
     ]);
   };
