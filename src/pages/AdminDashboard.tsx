@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { ClipboardCheck, Download, ImagePlus, LogOut, Plus, QrCode, Search, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fileToCoverBlob, getCoverMap, resolveCover } from '../lib/covers';
+import LeaderboardList from '../components/LeaderboardList';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
+import AdminStatsReport from './AdminStatsReport';
 import { QUESTIONS_PER_QUIZ, QUIZ_COUNT } from './quiz';
 import { PHOTO_CHALLENGE } from './photoChallenge';
 import { ANAGRAM_CHALLENGE } from './anagramChallenge';
@@ -62,36 +64,6 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
   URL.revokeObjectURL(url);
 }
 
-function LeaderboardList({ rows }: { rows: { rank: number; name: string; points: number }[] }) {
-  if (rows.length === 0) {
-    return <p className="admin-empty-roster">No points scored yet.</p>;
-  }
-  const max = Math.max(...rows.map(r => r.points));
-  return (
-    <ol className="admin-lb-list">
-      {rows.map(r => (
-        <li key={r.name} className="admin-lb-row">
-          <span className={`admin-lb-rank ${r.rank <= 3 ? `admin-lb-rank-${r.rank}` : ''}`}>
-            {r.rank}
-          </span>
-          <span className="admin-lb-main">
-            <span className="admin-lb-name">{r.name}</span>
-            <span className="admin-lb-bar-track">
-              <span
-                className={`admin-lb-bar ${r.rank <= 3 ? `admin-lb-bar-${r.rank}` : ''}`}
-                style={{ width: `${max > 0 ? Math.max(4, (r.points / max) * 100) : 0}%` }}
-              />
-            </span>
-          </span>
-          <span className="admin-lb-points">
-            {r.points} pt{r.points === 1 ? '' : 's'}
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 export default function AdminDashboard({ onLogout }: Props) {
   const [teams, setTeams] = useState<AdminTeam[]>([]);
   const [participants, setParticipants] = useState<AdminParticipant[]>([]);
@@ -111,7 +83,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const coverFileRef = useRef<HTMLInputElement>(null);
   // All the marking lives on its own page; the dashboard has the rest.
   const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
-  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'qr'>('teams');
+  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'stats' | 'qr'>('teams');
   const [teamQuery, setTeamQuery] = useState('');
 
   useEffect(() => {
@@ -708,6 +680,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                 Leaderboards
               </button>
               <button
+                className={`admin-btn admin-tab ${section === 'stats' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('stats')}
+              >
+                Stats
+              </button>
+              <button
                 className="admin-btn admin-btn-primary admin-marking-link"
                 onClick={() => setPage('marking')}
               >
@@ -846,6 +824,8 @@ export default function AdminDashboard({ onLogout }: Props) {
                 </div>
               </>
             )}
+
+            {section === 'stats' && <AdminStatsReport teams={teams} answers={answerSets} />}
 
             {section === 'qr' && <AdminQrCodes />}
 
