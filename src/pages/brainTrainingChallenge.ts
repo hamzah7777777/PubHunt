@@ -18,7 +18,7 @@ export const BRAIN_TRAINING_CHALLENGE: BrainTrainingItem[] = [
   },
   {
     question: 'What was the first video game created for commercial release?',
-    answer: 'Pong',
+    answer: 'Computer Space',
   },
   {
     question: 'What movie inspired the video game Among Us?',
@@ -38,6 +38,6 @@ export const BRAIN_TRAINING_CHALLENGE: BrainTrainingItem[] = [
   },
   {
     question: 'As of February 2026, what is the best-selling console of all time?',
-    answer: 'Nintendo Switch',
+    answer: 'PlayStation 2',
   },
 ];
