@@ -42,6 +42,19 @@ function randomPin(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const quote = (f: string) => (/[",\n\r]/.test(f) ? `"${f.replace(/"/g, '""')}"` : f);
+  const csv = rows.map(row => row.map(f => quote(String(f))).join(',')).join('\r\n');
+  // BOM so Excel opens it as UTF-8.
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function LeaderboardList({ rows }: { rows: { rank: number; name: string; points: number }[] }) {
   if (rows.length === 0) {
     return <p className="admin-empty-roster">No points scored yet.</p>;
@@ -307,23 +320,13 @@ export default function AdminDashboard({ onLogout }: Props) {
   };
 
   const exportTeamsCsv = () => {
-    const quote = (f: string) => (/[",\n\r]/.test(f) ? `"${f.replace(/"/g, '""')}"` : f);
-    const rows = [
+    downloadCsv('pubhunt-teams.csv', [
       ['Team Name', 'Theme', 'Captain', 'Route', 'PIN'],
       ...teams.map(team => {
         const captain = participants.find(p => p.team_id === team.id && p.role === 'captain');
         return [team.name, team.game_theme, captain?.full_name ?? '', team.route, team.pin];
       }),
-    ];
-    const csv = rows.map(row => row.map(quote).join(',')).join('\r\n');
-    // BOM so Excel opens it as UTF-8.
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'pubhunt-teams.csv';
-    link.click();
-    URL.revokeObjectURL(url);
+    ]);
   };
 
   const addTeam = async () => {
@@ -524,6 +527,28 @@ export default function AdminDashboard({ onLogout }: Props) {
     row => row.scores.total
   );
 
+  // Mirrors the Scores table: every team in rank order with per-section
+  // points (max shown in the header where the section has a fixed max)
+  // and the overall total.
+  const exportScoresCsv = () => {
+    downloadCsv('pubhunt-scores.csv', [
+      [
+        'Rank',
+        'Team',
+        ...SECTION_KEYS.map(key =>
+          SECTION_MAX[key] !== null ? `${SECTION_LABELS[key]} (/${SECTION_MAX[key]})` : SECTION_LABELS[key]
+        ),
+        'Total',
+      ],
+      ...scoreRows.map(({ team, scores, rank }) => [
+        rank,
+        team.name,
+        ...SECTION_KEYS.map(key => scores[key]),
+        scores.total,
+      ]),
+    ]);
+  };
+
   const leaderboardFor = (key: SectionKey | 'total') =>
     withRanks(
       scoreRows
@@ -694,6 +719,11 @@ export default function AdminDashboard({ onLogout }: Props) {
                   <span className="admin-stats">
                     Points count answers marked correct · {unmarkedCount} still unmarked
                   </span>
+                  <div className="admin-toolbar-actions">
+                    <button className="admin-btn" onClick={exportScoresCsv}>
+                      <Download size={14} /> Export CSV
+                    </button>
+                  </div>
                 </div>
 
                 <div className="admin-table-wrap">
