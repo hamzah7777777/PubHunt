@@ -11,6 +11,7 @@ import { CONSOLE_CHALLENGE } from './consoleChallenge';
 import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
 import { MISSING_VOWELS_CHALLENGE } from './missingVowelsChallenge';
 import {
+  FACEBOOK_POINTS,
   SECTION_KEYS,
   SECTION_LABELS,
   SECTION_MAX,
@@ -512,6 +513,7 @@ export default function AdminDashboard({ onLogout }: Props) {
     consoles: consoleAnswers,
     brain: brainAnswers,
     vowels: vowelsAnswers,
+    facebook: facebookMarks,
   };
 
   const unmarkedCount =
@@ -591,6 +593,22 @@ export default function AdminDashboard({ onLogout }: Props) {
         header: `Vowels ${n}`,
         cell: (teamId: string) =>
           mark(vowelsAnswers.find(a => a.team_id === teamId && a.puzzle_number === n)?.is_correct),
+      })),
+      // Facebook uploads carry their point value (photo 5, videos 10) so
+      // row sums still match the section column. Nothing is submitted in
+      // the app, so an unchecked item is ? (not yet marked), never blank.
+      ...(
+        [
+          ['team_photo', 'Facebook: Team Photo'],
+          ['selection_video', 'Facebook: Selection Video'],
+          ['scene_video', 'Facebook: Scene Video'],
+        ] as const
+      ).map(([field, label]) => ({
+        header: `${label} (/${FACEBOOK_POINTS[field]})`,
+        cell: (teamId: string) => {
+          const m = facebookMarks.find(mk => mk.team_id === teamId)?.[field];
+          return m === true ? FACEBOOK_POINTS[field] : m === false ? 0 : '?';
+        },
       })),
     ];
 
