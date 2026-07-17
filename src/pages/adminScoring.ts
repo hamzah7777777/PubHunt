@@ -12,13 +12,14 @@ import type {
   AnagramAnswer,
   BrainTrainingAnswer,
   ConsoleAnswer,
+  FacebookMark,
   MissingVowelsAnswer,
   PhotoAnswer,
   QuizAnswer,
   TeamClashAnswer,
 } from '../types';
 
-export const SECTION_KEYS = ['clash', 'quiz', 'photos', 'anagrams', 'consoles', 'brain', 'vowels'] as const;
+export const SECTION_KEYS = ['clash', 'quiz', 'photos', 'anagrams', 'consoles', 'brain', 'vowels', 'facebook'] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export const SECTION_LABELS: Record<SectionKey, string> = {
@@ -29,6 +30,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   consoles: 'Photo Challenge : Consoles',
   brain: 'Brain Training',
   vowels: 'Missing Vowels',
+  facebook: 'Facebook Uploads',
 };
 
 // Compact names for the score table's column headers.
@@ -40,11 +42,24 @@ export const SECTION_SHORT_LABELS: Record<SectionKey, string> = {
   consoles: 'Consoles',
   brain: 'Brain',
   vowels: 'Vowels',
+  facebook: 'Facebook',
 };
 
-// Photo answers are worth 2 (character + game); everything else is 1 each.
-// Team clash has no fixed max — it's one point per other team (both routes),
-// which varies — so it's null and the table shows no denominator for it.
+// The three Facebook group uploads: the team photo is worth 5 points and
+// each video is worth 10.
+export const FACEBOOK_POINTS = {
+  team_photo: 5,
+  selection_video: 10,
+  scene_video: 10,
+} as const;
+
+const FACEBOOK_MAX =
+  FACEBOOK_POINTS.team_photo + FACEBOOK_POINTS.selection_video + FACEBOOK_POINTS.scene_video;
+
+// Photo answers are worth 2 (character + game); Facebook uploads are worth
+// FACEBOOK_POINTS each; everything else is 1 each. Team clash has no fixed
+// max — it's one point per other team (both routes), which varies — so it's
+// null and the table shows no denominator for it.
 export const SECTION_MAX: Record<SectionKey, number | null> = {
   clash: null,
   quiz: QUIZ_COUNT * QUESTIONS_PER_QUIZ,
@@ -53,6 +68,7 @@ export const SECTION_MAX: Record<SectionKey, number | null> = {
   consoles: CONSOLE_CHALLENGE.length,
   brain: BRAIN_TRAINING_CHALLENGE.length,
   vowels: MISSING_VOWELS_CHALLENGE.length,
+  facebook: FACEBOOK_MAX,
 };
 
 export interface AnswerSets {
@@ -63,6 +79,7 @@ export interface AnswerSets {
   consoles: ConsoleAnswer[];
   brain: BrainTrainingAnswer[];
   vowels: MissingVowelsAnswer[];
+  facebook: FacebookMark[];
 }
 
 export type TeamScores = Record<SectionKey, number> & { total: number };
@@ -81,6 +98,12 @@ export function computeTeamScores(teamId: string, answers: AnswerSets): TeamScor
   const consoles = answers.consoles.filter(a => a.team_id === teamId && a.is_correct === true).length;
   const brain = answers.brain.filter(a => a.team_id === teamId && a.is_correct === true).length;
   const vowels = answers.vowels.filter(a => a.team_id === teamId && a.is_correct === true).length;
+  const fbMark = answers.facebook.find(m => m.team_id === teamId);
+  const facebook = fbMark
+    ? (fbMark.team_photo === true ? FACEBOOK_POINTS.team_photo : 0) +
+      (fbMark.selection_video === true ? FACEBOOK_POINTS.selection_video : 0) +
+      (fbMark.scene_video === true ? FACEBOOK_POINTS.scene_video : 0)
+    : 0;
   return {
     clash,
     quiz,
@@ -89,7 +112,8 @@ export function computeTeamScores(teamId: string, answers: AnswerSets): TeamScor
     consoles,
     brain,
     vowels,
-    total: clash + quiz + photos + anagrams + consoles + brain + vowels,
+    facebook,
+    total: clash + quiz + photos + anagrams + consoles + brain + vowels + facebook,
   };
 }
 
