@@ -28,4 +28,6 @@ Schema and the admin-passphrase login live in `supabase/schema.sql` and `supabas
 
 `supabase/security_hardening.sql` is a one-shot migration that brings an existing database up to the current security model (admin gate via `claim_admin`/`is_admin`, PIN-checked team RPCs, answer length caps). Deploy it together with the matching client build — old clients can't call the new RPC signatures and vice versa.
 
+`supabase/awards.sql` sets up the public `/results` awards page: an `awards` table (public read, admin write) seeded with the final winners, edited from the dashboard's Awards tab. The client falls back to a built-in copy of the seed if the table doesn't exist yet.
+
 `supabase/team_covers.sql` sets up admin-managed team cover images: a `teams.cover_url` column, the public `game-covers` storage bucket (admin-only writes), and a `get_clash_targets` that returns the cover. Run it on fresh and existing projects alike (after the files above), and deploy it together with the matching client build — the client selects `cover_url` and fails to load team lists without it. Teams without an uploaded cover keep falling back to the static theme-matched covers in `public/covers/`.

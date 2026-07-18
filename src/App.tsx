@@ -14,6 +14,7 @@ import RouteMenu from './pages/RouteMenu';
 import QuizPage from './pages/QuizPage';
 import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
+import Results from './pages/Results';
 import HintMario from './pages/pub hints/HintMario';
 import HintPokemon from './pages/pub hints/HintPokemon';
 import HintAmongUs from './pages/pub hints/HintAmongUs';
@@ -24,7 +25,7 @@ import { QUIZ_COUNT } from './pages/quiz';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'results';
 
 // Themed shells by position: pubs 1-4, then the finish line. Both routes
 // share the shells; the riddle text comes from ROUTE_HINTS.
@@ -43,6 +44,21 @@ function consumeHintDeepLink(): { route: 'A' | 'B'; index: number } | null {
 
 const deepLink = consumeHintDeepLink();
 
+// Hidden awards page: nothing on the site links to /results yet. The Vite
+// dev server serves the app at the /results path directly; on GitHub Pages
+// the 404.html shim rewrites /results to /#results, so accept either form.
+function isResultsUrl(): boolean {
+  return /^#results$/i.test(window.location.hash) || /\/results\/?$/i.test(window.location.pathname);
+}
+
+// Leaving the awards page (via the header logo) should also drop the
+// /results marker from the URL so a refresh lands back on the main app.
+function clearResultsUrl() {
+  if (!isResultsUrl()) return;
+  const path = window.location.pathname.replace(/results\/?$/i, '');
+  history.replaceState(null, '', path + window.location.search);
+}
+
 export default function App() {
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
     const saved = localStorage.getItem('pubhunt_team_session');
@@ -60,6 +76,9 @@ export default function App() {
   // A refresh shouldn't kick a logged-in team back to the landing page:
   // restore the portal (and the tab/hint they were on) from localStorage.
   const [view, setView] = useState<View>(() => {
+    // The awards URL wins even over a saved team session — it's a
+    // standalone page; the header logo leads back to the main app.
+    if (isResultsUrl()) return 'results';
     if (localStorage.getItem('pubhunt_team_session')) return 'team-portal';
     // A scanned QR shows logged-out visitors a standalone public hint page.
     return deepLink !== null && deepLink.index > 0 ? 'public-hint' : 'landing';
@@ -124,6 +143,9 @@ export default function App() {
   useEffect(() => registerCutoffPopup(() => setCutoffPopupOpen(true)), []);
 
   useEffect(() => {
+    // Not on the awards page: a "submissions closed" popup over the
+    // results ceremony is just noise for anyone opening that link fresh.
+    if (isResultsUrl()) return;
     const showOnce = () => {
       if (localStorage.getItem('pubhunt_cutoff_seen')) return;
       localStorage.setItem('pubhunt_cutoff_seen', '1');
@@ -229,7 +251,14 @@ export default function App() {
     <>
     <div className="phone-wrapper slide-up-anim">
       <header className="game-header">
-        <div className="game-header-logo" onClick={() => setView('landing')} style={{ cursor: 'pointer' }}>
+        <div
+          className="game-header-logo"
+          onClick={() => {
+            clearResultsUrl();
+            setView('landing');
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           <Beer size={24} />
           <span>PUB<span>HUNT</span></span>
         </div>
@@ -383,6 +412,8 @@ export default function App() {
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
           )}
+
+          {view === 'results' && <Results />}
         </div>
       </main>
     </div>

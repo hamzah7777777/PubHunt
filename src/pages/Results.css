@@ -1,0 +1,226 @@
+/* =========================================================
+   RESULTS / AWARDS PAGE — pixel-arcade awards ceremony.
+   Follows the index.css design system: flat colours, 0px
+   corners, thick borders, hard offset shadows, steps() motion.
+   ========================================================= */
+
+/* Podium metals — flat arcade takes on gold / silver / bronze */
+:root {
+  --award-gold:          #FFC933;
+  --award-gold-soft:     #2B2208;
+  --award-silver:        #C7CCD8;
+  --award-silver-soft:   #1E202A;
+  --award-bronze:        #D08A4E;
+  --award-bronze-soft:   #2A1B0E;
+}
+
+/* ----------------------------------------------------------
+   HERO
+   ---------------------------------------------------------- */
+.results-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.results-hero-trophy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  background: var(--award-gold);
+  color: var(--color-dark);
+  border: 3px solid var(--border-default);
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+/* Pixel sparkles pinned in the hero corners */
+.results-hero-spark {
+  position: absolute;
+  color: var(--award-gold);
+  animation: resultsTwinkle 1.6s steps(2) infinite;
+}
+.results-hero-spark:nth-child(2) { animation-delay: 0.8s; }
+
+@keyframes resultsTwinkle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+/* ----------------------------------------------------------
+   PODIUM — 2nd / 1st / 3rd columns with stepped block heights
+   ---------------------------------------------------------- */
+.results-podium {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.results-podium-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.results-podium-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border-default);
+  box-shadow: 3px 3px 0 0 #000000;
+  color: var(--color-dark);
+}
+
+.results-podium-team {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-heading);
+  word-break: break-word;
+}
+
+.results-podium-points {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-body-subtle);
+}
+
+.results-podium-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--color-dark);
+  border: 3px solid var(--border-default);
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+.results-podium-1 .results-podium-block,
+.results-podium-1 .results-podium-medal { background: var(--award-gold); }
+.results-podium-2 .results-podium-block,
+.results-podium-2 .results-podium-medal { background: var(--award-silver); }
+.results-podium-3 .results-podium-block,
+.results-podium-3 .results-podium-medal { background: var(--award-bronze); }
+
+.results-podium-1 .results-podium-block { height: 112px; }
+.results-podium-2 .results-podium-block { height: 82px; }
+.results-podium-3 .results-podium-block { height: 62px; }
+
+.results-podium-1 .results-podium-team { font-size: 11px; color: var(--award-gold); }
+
+/* ----------------------------------------------------------
+   AWARD CARDS
+   ---------------------------------------------------------- */
+.results-award {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+}
+
+.results-award-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--border-default);
+  box-shadow: 3px 3px 0 0 #000000;
+  color: var(--color-dark);
+}
+
+.results-award-body { min-width: 0; }
+
+.results-award-title {
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--color-heading);
+  margin-bottom: 6px;
+}
+
+.results-award-blurb {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--color-body-subtle);
+  margin-bottom: 8px;
+}
+
+/* Top-3 list inside an award card: gold/silver/bronze rank chips. */
+.results-award-places {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.results-award-place {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--color-body);
+}
+
+.results-award-place-rank {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--color-dark);
+  border: 2px solid var(--border-default);
+  box-shadow: 2px 2px 0 0 #000000;
+}
+
+.results-award-place-1 .results-award-place-rank { background: var(--award-gold); }
+.results-award-place-2 .results-award-place-rank { background: var(--award-silver); }
+.results-award-place-3 .results-award-place-rank { background: var(--award-bronze); }
+
+.results-award-place-1 .results-award-place-team {
+  color: var(--fg-success-strong);
+}
+
+.results-award-party {
+  margin-left: 6px;
+  vertical-align: -2px;
+}
+
+/* Tie note under the top-3, e.g. "Four perfect 8/8s — top three by…" */
+.results-award-detail {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-body-subtle);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* ----------------------------------------------------------
+   "TO BE REVEALED" mystery state — arcade attract-mode blink
+   ---------------------------------------------------------- */
+.results-tba {
+  font-family: var(--font-pixel);
+  color: var(--fg-purple);
+  animation: resultsBlink 1.2s steps(1) infinite;
+}
+
+@keyframes resultsBlink {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.2; }
+}

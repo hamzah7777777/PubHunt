@@ -3,6 +3,7 @@ import { ClipboardCheck, Download, ImagePlus, LogOut, Plus, QrCode, Search, Tras
 import { supabase } from '../lib/supabase';
 import { fileToCoverBlob, getCoverMap, resolveCover } from '../lib/covers';
 import LeaderboardList from '../components/LeaderboardList';
+import AdminAwards from './AdminAwards';
 import AdminMarkingPage from './AdminMarkingPage';
 import AdminQrCodes from './AdminQrCodes';
 import AdminStatsReport from './AdminStatsReport';
@@ -83,7 +84,7 @@ export default function AdminDashboard({ onLogout }: Props) {
   const coverFileRef = useRef<HTMLInputElement>(null);
   // All the marking lives on its own page; the dashboard has the rest.
   const [page, setPage] = useState<'dashboard' | 'marking'>('dashboard');
-  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'stats' | 'qr'>('teams');
+  const [section, setSection] = useState<'teams' | 'scores' | 'leaderboard' | 'stats' | 'awards' | 'qr'>('teams');
   const [teamQuery, setTeamQuery] = useState('');
 
   useEffect(() => {
@@ -686,6 +687,12 @@ export default function AdminDashboard({ onLogout }: Props) {
                 Stats
               </button>
               <button
+                className={`admin-btn admin-tab ${section === 'awards' ? 'admin-tab-active' : ''}`}
+                onClick={() => setSection('awards')}
+              >
+                Awards
+              </button>
+              <button
                 className="admin-btn admin-btn-primary admin-marking-link"
                 onClick={() => setPage('marking')}
               >
@@ -826,6 +833,8 @@ export default function AdminDashboard({ onLogout }: Props) {
             )}
 
             {section === 'stats' && <AdminStatsReport teams={teams} answers={answerSets} />}
+
+            {section === 'awards' && <AdminAwards teams={teams} />}
 
             {section === 'qr' && <AdminQrCodes />}
 

@@ -105,6 +105,22 @@ export interface TeamClashAnswer {
   submitted_at: string;
 }
 
+// One slot on the /results awards page. place 1-3 = champions podium spot
+// (winner + detail only); null place = a special award card with a top-3
+// (winner / second / third). null winner = "TO BE REVEALED".
+export interface Award {
+  id: string;
+  slug: string;
+  place: number | null;
+  title: string;
+  blurb: string;
+  winner: string | null;
+  second: string | null;
+  third: string | null;
+  detail: string | null;
+  sort_order: number;
+}
+
 export interface AdminParticipant {
   id: string;
   team_id: string;
