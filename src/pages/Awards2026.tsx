@@ -146,7 +146,7 @@ const CATEGORIES: Category[] = [
       {
         place: 2,
         photo: '/awards2026/individual-2.webp',
-        name: 'Placeholder',
+        name: 'Louise Whaley',
         character: 'Lakitu',
         theme: 'Super Mario Kart',
         cover: '/covers/mario-kart.webp',
