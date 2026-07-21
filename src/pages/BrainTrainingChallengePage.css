@@ -45,12 +45,39 @@
 }
 
 .bt-screen {
+  position: relative;
+  overflow: hidden;
   background: var(--bt-screen);
   border-radius: 14px;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Lift every real UI box above the floating-faces background. */
+.bt-screen > *:not(.bt-faces) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- floating professor heads drifting behind the boxes ---- */
+.bt-faces {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  pointer-events: none;
+}
+.bt-faces img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  object-fit: contain;
+  opacity: 0.6;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
+  will-change: transform;
 }
 
 /* ---- top row: Back pill + title bar ---- */

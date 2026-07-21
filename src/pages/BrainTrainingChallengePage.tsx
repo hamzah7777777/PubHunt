@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { sfx } from '../lib/sfx';
 import { allowSubmit } from '../lib/cutoff';
 import { BRAIN_TRAINING_CHALLENGE } from './brainTrainingChallenge';
+import BrainTrainingFaces from './BrainTrainingFaces';
 import './BrainTrainingChallengePage.css';
 
 interface Props {
@@ -97,6 +98,7 @@ export default function BrainTrainingChallengePage({ teamId, teamPin, onBack }: 
   return (
     <div className="bt-shell scale-up-anim" onPointerDown={react}>
       <div className="bt-screen">
+        {!loading && <BrainTrainingFaces faces={FACES} />}
         <div className="bt-topbar">
           <button type="button" className="bt-back" onClick={onBack}>
             Back
