@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect } from 'react';
 import {
   ArrowLeft,
   Brain,
@@ -22,6 +22,7 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import Awards2026Heads from './Awards2026Heads';
 import './Awards2026.css';
 
 // Standalone awards showcase for the 2026 Pub Hunt, reachable at /Awards2026
@@ -269,33 +270,10 @@ const BEST_DETECTIVES: ClashRow[] = [
   { rank: '5', team: 'The Clever Ones', theme: 'Fortnite', value: 33 },
 ];
 
-// Decorative low-poly character sprites (public/braintrainer/) scattered down
-// the page. Positioned by top% (spreads across full height) against the left
-// or right edge, each with a floating animation variant, size and timing.
-interface Sprite {
-  n: number;
-  top: string;
-  side: 'left' | 'right';
-  edge: string;
-  size: number;
-  variant: 'a' | 'b' | 'c' | 'd';
-  dur: number;
-  delay: number;
-}
-
-const SPRITES: Sprite[] = [
-  { n: 7, top: '4%', side: 'left', edge: '1.5%', size: 96, variant: 'a', dur: 6.5, delay: 0 },
-  { n: 8, top: '10%', side: 'right', edge: '1%', size: 74, variant: 'b', dur: 7.5, delay: 0.8 },
-  { n: 9, top: '20%', side: 'left', edge: '2.5%', size: 66, variant: 'c', dur: 5.5, delay: 0.3 },
-  { n: 10, top: '28%', side: 'right', edge: '1.5%', size: 104, variant: 'd', dur: 8.5, delay: 1.2 },
-  { n: 11, top: '37%', side: 'left', edge: '1%', size: 78, variant: 'b', dur: 6.8, delay: 0.5 },
-  { n: 12, top: '47%', side: 'right', edge: '2.5%', size: 70, variant: 'a', dur: 7.2, delay: 0.2 },
-  { n: 13, top: '57%', side: 'left', edge: '1.5%', size: 98, variant: 'c', dur: 6.0, delay: 1.0 },
-  { n: 14, top: '66%', side: 'right', edge: '1%', size: 78, variant: 'd', dur: 8.0, delay: 0.6 },
-  { n: 15, top: '76%', side: 'left', edge: '2%', size: 68, variant: 'a', dur: 5.8, delay: 0.4 },
-  { n: 16, top: '85%', side: 'right', edge: '1.5%', size: 90, variant: 'b', dur: 7.0, delay: 0.9 },
-  { n: 17, top: '93%', side: 'left', edge: '1.5%', size: 84, variant: 'c', dur: 6.4, delay: 0.1 },
-];
+// Low-poly character heads (public/braintrainer/) used for the drifting,
+// bouncing background behind the page — see Awards2026Heads.
+const FACE_COUNT = 17;
+const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.webp`);
 
 function ClashList({ title, Icon, unit, rows }: { title: string; Icon: typeof Trophy; unit: string; rows: ClashRow[] }) {
   const max = Math.max(...rows.map(r => r.value));
@@ -422,26 +400,8 @@ export default function Awards2026({ onExit, onOpenGallery }: { onExit: () => vo
 
   return (
     <div className="aw-root">
-      {/* Decorative floating character sprites scattered down the page. */}
-      <div className="aw-sprites" aria-hidden="true">
-        {SPRITES.map(s => (
-          <img
-            key={s.n}
-            className={`aw-sprite aw-sprite-${s.variant}`}
-            src={`/braintrainer/braintrainer${s.n}.webp`}
-            alt=""
-            style={
-              {
-                '--sz': `${s.size}px`,
-                top: s.top,
-                [s.side]: s.edge,
-                animationDuration: `${s.dur}s`,
-                animationDelay: `${s.delay}s`,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
+      {/* Character heads drifting and bouncing around behind the content. */}
+      <Awards2026Heads faces={FACES} />
 
       <header className="aw-header">
         <button className="aw-header-logo" onClick={onExit} aria-label="Back to Pub Hunt">

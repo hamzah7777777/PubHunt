@@ -123,6 +123,13 @@
   color: var(--color-dark);
   border-color: var(--border-default);
   text-decoration: none;
+  /* Override .btn's nowrap so the long label wraps instead of overflowing
+     the hero card on narrow phones. */
+  max-width: 100%;
+  white-space: normal;
+  flex-wrap: wrap;
+  line-height: 1.3;
+  text-align: center;
 }
 .aw-gallery-cta:hover,
 .aw-gallery-cta:active { background: #5CFF95; }
@@ -598,57 +605,36 @@
 .aw-ff-value small { display: block; font-size: 8px; color: var(--color-body-subtle); margin-top: 4px; }
 
 /* ----------------------------------------------------------
-   FLOATING SPRITES — decorative low-poly heads scattered down
-   the page, behind the content (never over text).
+   FLOATING HEADS — decorative low-poly heads that drift and
+   bounce around the screen behind the content (never over
+   text). Positions are driven by JS (Awards2026Heads); the
+   layer is pinned to the top of .aw-root and shifted to follow
+   the scroll so the heads stay within the visible viewport.
    ---------------------------------------------------------- */
-.aw-sprites {
+.aw-heads {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
+  will-change: transform;
 }
-/* Content sits above the sprite layer. */
+/* Content sits above the heads layer. */
 .aw-header, .aw-container { position: relative; z-index: 1; }
 
-.aw-sprite {
+.aw-heads img {
   position: absolute;
-  width: var(--sz);
-  height: auto;
+  top: 0;
+  left: 0;
+  object-fit: contain;
   opacity: 0.9;
   image-rendering: auto;
   filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45));
   will-change: transform;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-.aw-sprite-a { animation-name: awSpriteFloatA; }
-.aw-sprite-b { animation-name: awSpriteFloatB; }
-.aw-sprite-c { animation-name: awSpriteBobC; }
-.aw-sprite-d { animation-name: awSpriteSwayD; }
-
-@keyframes awSpriteFloatA {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50%      { transform: translateY(-20px) rotate(5deg); }
-}
-@keyframes awSpriteFloatB {
-  0%, 100% { transform: translateY(0) rotate(4deg); }
-  50%      { transform: translateY(-26px) rotate(-4deg); }
-}
-@keyframes awSpriteBobC {
-  0%, 100% { transform: translateY(-12px) rotate(0deg); }
-  50%      { transform: translateY(12px) rotate(7deg); }
-}
-@keyframes awSpriteSwayD {
-  0%   { transform: translate(0, 0) rotate(-7deg); }
-  25%  { transform: translate(10px, -12px) rotate(0deg); }
-  50%  { transform: translate(0, -6px) rotate(7deg); }
-  75%  { transform: translate(-10px, -14px) rotate(0deg); }
-  100% { transform: translate(0, 0) rotate(-7deg); }
 }
 
 @media (max-width: 680px) {
-  .aw-sprite { width: calc(var(--sz) * 0.6); opacity: 0.75; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .aw-sprite { animation: none; }
+  .aw-heads img { opacity: 0.75; }
 }
