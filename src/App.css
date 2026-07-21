@@ -5,3 +5,15 @@
   display: flex;
   justify-content: center;
 }
+
+/* Landing-page Awards call-to-action — a gold arcade button (in place of the
+   old instructions panel) that opens the 2026 awards showcase. */
+.awards-cta {
+  background: #FFC933;
+  color: var(--color-dark);
+  border-color: var(--border-default);
+}
+.awards-cta:hover,
+.awards-cta:active {
+  background: #FFD44D;
+}

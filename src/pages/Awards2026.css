@@ -1,0 +1,654 @@
+/* =========================================================
+   AWARDS 2026 — standalone full-width awards showcase.
+   Uses the index.css pixel-arcade system (flat colours, 0px
+   corners, thick borders, hard offset shadows, steps() motion)
+   but breaks out of the phone shell to fill desktop screens.
+   ========================================================= */
+
+.aw-root {
+  --aw-gold:   #FFC933;
+  --aw-silver: #C7CCD8;
+  --aw-bronze: #D08A4E;
+
+  width: 100%;
+  min-height: 100vh;
+  background: var(--neutral-primary);
+  color: var(--color-body);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s steps(4) forwards;
+  /* Containing block + clip for the scattered decorative sprites. */
+  position: relative;
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------
+   HEADER
+   ---------------------------------------------------------- */
+.aw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--brand);
+  border-bottom: 3px solid var(--border-default);
+}
+
+.aw-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--color-white);
+  text-transform: uppercase;
+}
+.aw-header-logo > span span { color: var(--tertiary-brand); }
+.aw-back { white-space: nowrap; }
+
+/* ----------------------------------------------------------
+   CONTAINER — centred column that widens on desktop
+   ---------------------------------------------------------- */
+.aw-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px 14px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+@media (min-width: 768px) {
+  .aw-container { padding: 28px 28px 56px; gap: 36px; }
+}
+
+/* ----------------------------------------------------------
+   HERO
+   ---------------------------------------------------------- */
+.aw-hero {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  background: var(--brand);
+  border: 3px solid var(--border-default);
+  box-shadow: var(--shadow-card-ring);
+  padding: 30px 24px;
+}
+
+@media (min-width: 768px) {
+  .aw-hero { padding: 40px 32px; }
+}
+
+.aw-hero-trophy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 14px;
+  background: var(--aw-gold);
+  color: var(--color-dark);
+  border: 3px solid var(--border-default);
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+.aw-hero-title {
+  color: var(--color-white);
+  font-size: clamp(26px, 6vw, 52px);
+  line-height: 1.2;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.aw-hero-sub {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(17px, 2.4vw, 22px);
+  margin-bottom: 18px;
+}
+
+.aw-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Green CTA linking to the photo gallery (matches the gallery's green badge) */
+.aw-gallery-cta {
+  background: var(--tertiary-brand);
+  color: var(--color-dark);
+  border-color: var(--border-default);
+  text-decoration: none;
+}
+.aw-gallery-cta:hover,
+.aw-gallery-cta:active { background: #5CFF95; }
+.aw-hero .aw-gallery-cta { margin-top: 20px; }
+
+.aw-thanks-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.aw-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--color-white);
+  background: rgba(0, 0, 0, 0.28);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  padding: 8px 11px;
+}
+
+/* Pixel sparkles blinking in the hero corners */
+.aw-hero-spark {
+  position: absolute;
+  color: var(--aw-gold);
+  animation: awTwinkle 1.6s steps(2) infinite;
+}
+.aw-hero-spark-1 { top: 16px; left: 18px; }
+.aw-hero-spark-2 { top: 30px; right: 24px; animation-delay: 0.5s; }
+.aw-hero-spark-3 { bottom: 22px; left: 30px; animation-delay: 1s; }
+
+@keyframes awTwinkle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+/* ----------------------------------------------------------
+   INTRO
+   ---------------------------------------------------------- */
+.aw-intro { display: flex; flex-direction: column; gap: 10px; padding: 20px; }
+.aw-intro p { font-size: 18px; line-height: 1.5; margin: 0; }
+.aw-intro p:first-child {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-heading);
+}
+
+@media (min-width: 768px) {
+  .aw-intro { padding: 26px 32px; }
+  .aw-intro p { font-size: 19px; }
+}
+
+/* ----------------------------------------------------------
+   CATEGORY HEADER
+   ---------------------------------------------------------- */
+.aw-cat { display: flex; flex-direction: column; gap: 14px; }
+
+.aw-cat-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 3px solid var(--border-light);
+  padding-bottom: 12px;
+}
+
+.aw-cat-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--brand);
+  color: var(--color-white);
+  border: 3px solid var(--border-default);
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+.aw-cat-head-text { min-width: 0; }
+.aw-cat-title { margin: 0 0 6px; font-size: clamp(18px, 3vw, 26px); }
+.aw-cat-tagline { margin: 0; font-size: 18px; color: var(--color-body-subtle); }
+
+/* ----------------------------------------------------------
+   PODIUM LAYOUT — champion banner + two runners-up
+   ---------------------------------------------------------- */
+.aw-podium { display: flex; flex-direction: column; gap: 14px; }
+
+.aw-runners {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .aw-runners { grid-template-columns: 1fr 1fr; }
+}
+
+/* Best Individual Outfit — 3-up row of portrait cards. Full-body costumes
+   are shown whole (contain) inside a portrait frame, so nothing is cropped. */
+.aw-solo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .aw-solo-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.aw-kind-individual .aw-photo {
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-dark);
+  padding: 6px;
+}
+.aw-kind-individual .aw-photo img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+/* 1st place still reads as the winner: gold name to match its gold frame. */
+.aw-solo-grid .aw-place-1 .aw-name { color: var(--aw-gold); }
+
+/* ----------------------------------------------------------
+   WINNER CARD
+   ---------------------------------------------------------- */
+.aw-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-primary-medium);
+  border: 2px solid var(--border-default);
+  box-shadow: var(--shadow-card-ring);
+}
+
+/* Champion becomes a photo|info banner on wider screens */
+@media (min-width: 720px) {
+  .aw-champion {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: stretch;
+  }
+}
+
+/* Accent edge by medal colour */
+.aw-place-1 { border-color: var(--aw-gold); box-shadow: 5px 5px 0 0 #000000, inset 0 4px 0 0 var(--aw-gold); }
+.aw-place-2 { border-top: 4px solid var(--aw-silver); }
+.aw-place-3 { border-top: 4px solid var(--aw-bronze); }
+
+/* PHOTO FRAME — cover so each photo fills the frame edge-to-edge with no
+   empty letterbox bars; biased slightly upward to keep faces in shot. */
+.aw-photo {
+  position: relative;
+  background: var(--color-dark);
+  border-bottom: 2px solid var(--border-light);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.aw-champion .aw-photo {
+  border-bottom: none;
+}
+@media (min-width: 720px) {
+  /* Photo fills the banner's height (driven by the info column), with a
+     floor so a short-info card still shows a proper hero image. The image is
+     taken out of flow so a tall portrait can't balloon the whole card. */
+  .aw-champion .aw-photo { border-right: 2px solid var(--border-light); height: 100%; aspect-ratio: auto; min-height: 240px; }
+  .aw-champion .aw-photo img { position: absolute; inset: 0; }
+}
+
+.aw-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+
+/* Rank badge pinned to the photo */
+.aw-rank {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--color-dark);
+  padding: 6px 9px;
+  border: 2px solid var(--border-default);
+  box-shadow: 3px 3px 0 0 #000000;
+}
+.aw-rank-1 { background: var(--aw-gold); }
+.aw-rank-2 { background: var(--aw-silver); }
+.aw-rank-3 { background: var(--aw-bronze); }
+
+/* INFO COLUMN */
+.aw-info {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px;
+}
+@media (min-width: 720px) {
+  .aw-champion .aw-info { padding: 20px 22px; justify-content: center; }
+}
+
+.aw-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-heading);
+  word-break: break-word;
+}
+.aw-champion .aw-name { font-size: clamp(15px, 2.2vw, 20px); color: var(--aw-gold); }
+.aw-name-party { flex-shrink: 0; color: var(--aw-gold); margin-top: -2px; }
+
+/* THEME CHIP with game cover art */
+.aw-theme {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--neutral-primary-strong);
+  border: 2px solid var(--border-light);
+  padding: 8px 10px;
+}
+.aw-theme-cover {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  background: var(--color-dark);
+  border: 2px solid var(--border-default);
+  image-rendering: auto;
+}
+.aw-champion .aw-theme-cover { width: 52px; height: 52px; }
+.aw-theme-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.aw-theme-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  text-transform: uppercase;
+  color: var(--fg-purple);
+}
+.aw-theme-text strong {
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.15;
+  color: var(--color-heading);
+  font-weight: 400;
+}
+
+.aw-character { margin: 0; font-size: 18px; color: var(--color-body); }
+.aw-character strong { color: var(--fg-success-strong); font-weight: 400; }
+
+/* CAPTAIN / TEAM */
+.aw-people { display: flex; flex-direction: column; gap: 7px; }
+.aw-people-label {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--color-body-subtle);
+}
+.aw-captain {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--color-heading);
+}
+.aw-captain svg { color: var(--aw-gold); flex-shrink: 0; }
+
+.aw-members {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.aw-member {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-body);
+  background: var(--neutral-primary-strong);
+  border: 2px solid var(--border-light);
+  padding: 5px 9px;
+}
+
+/* WATCH BUTTON (scene re-enactment) */
+.aw-watch { align-self: flex-start; margin-top: 2px; text-decoration: none; }
+
+/* ----------------------------------------------------------
+   THANKS FOOTER
+   ---------------------------------------------------------- */
+.aw-thanks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+}
+.aw-thanks svg { color: var(--fg-success-strong); }
+.aw-thanks p { margin: 0; font-size: 19px; max-width: 620px; }
+.aw-thanks-btn { margin-top: 6px; text-decoration: none; }
+
+/* ----------------------------------------------------------
+   FUN FACTS
+   ---------------------------------------------------------- */
+.aw-funfacts { gap: 18px; }
+.aw-cat-icon-alt { background: var(--tertiary-brand); color: var(--color-dark); }
+
+/* Overall / route winners */
+.aw-ff-routes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 16px;
+}
+@media (min-width: 720px) {
+  .aw-ff-routes { grid-template-columns: repeat(3, 1fr); }
+}
+.aw-ff-route {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--neutral-primary-strong);
+  border: 2px solid var(--border-light);
+}
+.aw-ff-route-hero { border-color: var(--aw-gold); }
+.aw-ff-route-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--color-body-subtle);
+}
+.aw-ff-route-hero .aw-ff-route-label,
+.aw-ff-route-hero .aw-ff-route-label svg { color: var(--aw-gold); }
+.aw-ff-route-team {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--color-heading);
+}
+
+/* Blocks + subheads */
+.aw-ff-block { display: flex; flex-direction: column; gap: 12px; }
+.aw-ff-subhead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-heading);
+}
+.aw-ff-subhead svg { color: var(--fg-purple); flex-shrink: 0; }
+
+/* Shared mini bar */
+.aw-ff-bar {
+  display: block;
+  width: 100%;
+  height: 12px;
+  background: var(--neutral-primary-strong);
+  border: 2px solid var(--border-light);
+  overflow: hidden;
+}
+.aw-ff-bar-fill {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--brand-strong) 0, var(--brand-strong) 6px,
+    var(--brand) 6px, var(--brand) 8px
+  );
+}
+
+/* The three hardest questions */
+.aw-ff-q-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .aw-ff-q-grid { grid-template-columns: repeat(3, 1fr); } }
+.aw-ff-q { display: flex; flex-direction: column; gap: 10px; padding: 16px; }
+.aw-ff-q-tag {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  text-transform: uppercase;
+  color: var(--fg-purple);
+}
+.aw-ff-q-clue {
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: 1px;
+  color: var(--color-heading);
+  word-break: break-word;
+}
+.aw-ff-q-answer {
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--fg-success-strong);
+}
+.aw-ff-q-answer-label {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  text-transform: uppercase;
+  color: var(--color-body-subtle);
+  margin-bottom: 4px;
+}
+.aw-ff-q-stat { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.aw-ff-q-score { font-family: var(--font-body); font-size: 16px; color: var(--color-body-subtle); }
+.aw-ff-q-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--color-body-subtle);
+  border-left: 3px solid var(--border-light);
+  padding-left: 10px;
+}
+
+/* Team Clash lists */
+.aw-ff-lists { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .aw-ff-lists { grid-template-columns: 1fr 1fr; } }
+.aw-ff-list { padding: 16px; }
+.aw-ff-list-head { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.aw-ff-list-head svg { color: var(--fg-purple); }
+.aw-ff-list-head h4 { margin: 0; font-size: 11px; color: var(--color-heading); }
+.aw-ff-rows { list-style: none; display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; }
+.aw-ff-row { display: flex; align-items: flex-start; gap: 10px; }
+.aw-ff-rank {
+  flex-shrink: 0;
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--fg-brand);
+  padding-top: 3px;
+}
+.aw-ff-row:first-child .aw-ff-rank { color: var(--aw-gold); }
+.aw-ff-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.aw-ff-team { font-family: var(--font-body); font-size: 18px; line-height: 1.1; color: var(--color-heading); }
+.aw-ff-row-theme { font-family: var(--font-body); font-size: 14px; line-height: 1; color: var(--color-body-subtle); }
+.aw-ff-row .aw-ff-bar { height: 8px; margin-top: 2px; }
+.aw-ff-value {
+  flex-shrink: 0;
+  text-align: right;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--fg-success-strong);
+  padding-top: 2px;
+}
+.aw-ff-value small { display: block; font-size: 8px; color: var(--color-body-subtle); margin-top: 4px; }
+
+/* ----------------------------------------------------------
+   FLOATING SPRITES — decorative low-poly heads scattered down
+   the page, behind the content (never over text).
+   ---------------------------------------------------------- */
+.aw-sprites {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* Content sits above the sprite layer. */
+.aw-header, .aw-container { position: relative; z-index: 1; }
+
+.aw-sprite {
+  position: absolute;
+  width: var(--sz);
+  height: auto;
+  opacity: 0.9;
+  image-rendering: auto;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45));
+  will-change: transform;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.aw-sprite-a { animation-name: awSpriteFloatA; }
+.aw-sprite-b { animation-name: awSpriteFloatB; }
+.aw-sprite-c { animation-name: awSpriteBobC; }
+.aw-sprite-d { animation-name: awSpriteSwayD; }
+
+@keyframes awSpriteFloatA {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50%      { transform: translateY(-20px) rotate(5deg); }
+}
+@keyframes awSpriteFloatB {
+  0%, 100% { transform: translateY(0) rotate(4deg); }
+  50%      { transform: translateY(-26px) rotate(-4deg); }
+}
+@keyframes awSpriteBobC {
+  0%, 100% { transform: translateY(-12px) rotate(0deg); }
+  50%      { transform: translateY(12px) rotate(7deg); }
+}
+@keyframes awSpriteSwayD {
+  0%   { transform: translate(0, 0) rotate(-7deg); }
+  25%  { transform: translate(10px, -12px) rotate(0deg); }
+  50%  { transform: translate(0, -6px) rotate(7deg); }
+  75%  { transform: translate(-10px, -14px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(-7deg); }
+}
+
+@media (max-width: 680px) {
+  .aw-sprite { width: calc(var(--sz) * 0.6); opacity: 0.75; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aw-sprite { animation: none; }
+}

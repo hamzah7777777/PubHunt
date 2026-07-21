@@ -12,6 +12,10 @@
       var path = window.location.pathname.replace(/\/+$/, '');
       if (/\/results$/i.test(path)) {
         window.location.replace(path.slice(0, -'results'.length) + '#results');
+      } else if (/\/awards2026$/i.test(path)) {
+        window.location.replace(path.slice(0, -'awards2026'.length) + '#awards2026');
+      } else if (/\/gallery$/i.test(path)) {
+        window.location.replace(path.slice(0, -'gallery'.length) + '#gallery');
       }
     </script>
     <style>

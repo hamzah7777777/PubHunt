@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Beer, LifeBuoy, Shield, Users, Volume2, VolumeX } from 'lucide-react';
+import { Beer, LifeBuoy, Shield, Trophy, Users, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from './lib/sfx';
 import { supabase } from './lib/supabase';
 import TeamLogin from './pages/TeamLogin';
@@ -7,7 +7,6 @@ import TeamPortal from './pages/TeamPortal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import BottomNav, { type AppTab } from './components/BottomNav';
-import InstructionsPanel from './components/InstructionsPanel';
 import CutoffPopup from './components/CutoffPopup';
 import { isPastCutoff, registerCutoffPopup, SUBMISSION_CUTOFF_MS } from './lib/cutoff';
 import RouteMenu from './pages/RouteMenu';
@@ -15,6 +14,8 @@ import QuizPage from './pages/QuizPage';
 import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
 import Results from './pages/Results';
+import Awards2026 from './pages/Awards2026';
+import Gallery from './pages/Gallery';
 import HintMario from './pages/pub hints/HintMario';
 import HintPokemon from './pages/pub hints/HintPokemon';
 import HintAmongUs from './pages/pub hints/HintAmongUs';
@@ -25,7 +26,7 @@ import { QUIZ_COUNT } from './pages/quiz';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'results';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'results' | 'awards2026' | 'gallery';
 
 // Themed shells by position: pubs 1-4, then the finish line. Both routes
 // share the shells; the riddle text comes from ROUTE_HINTS.
@@ -59,6 +60,38 @@ function clearResultsUrl() {
   history.replaceState(null, '', path + window.location.search);
 }
 
+// The 2026 photo awards showcase: another standalone page reachable only by
+// URL (/Awards2026 or /#Awards2026, case-insensitive). Like /results, the
+// dev server serves the path directly and the 404.html shim rewrites it to
+// the hash form on GitHub Pages.
+function isAwards2026Url(): boolean {
+  return /^#awards2026$/i.test(window.location.hash) || /\/awards2026\/?$/i.test(window.location.pathname);
+}
+
+function clearAwards2026Url() {
+  if (!isAwards2026Url()) return;
+  const path = window.location.pathname.replace(/awards2026\/?$/i, '');
+  history.replaceState(null, '', path + window.location.search);
+  if (/^#awards2026$/i.test(window.location.hash)) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+// The event photo gallery: standalone page at /Gallery (or /#Gallery), linked
+// from the awards page. Same dev-serve / 404-shim handling as the pages above.
+function isGalleryUrl(): boolean {
+  return /^#gallery$/i.test(window.location.hash) || /\/gallery\/?$/i.test(window.location.pathname);
+}
+
+function clearGalleryUrl() {
+  if (!isGalleryUrl()) return;
+  const path = window.location.pathname.replace(/gallery\/?$/i, '');
+  history.replaceState(null, '', path + window.location.search);
+  if (/^#gallery$/i.test(window.location.hash)) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
 export default function App() {
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
     const saved = localStorage.getItem('pubhunt_team_session');
@@ -76,8 +109,10 @@ export default function App() {
   // A refresh shouldn't kick a logged-in team back to the landing page:
   // restore the portal (and the tab/hint they were on) from localStorage.
   const [view, setView] = useState<View>(() => {
-    // The awards URL wins even over a saved team session — it's a
-    // standalone page; the header logo leads back to the main app.
+    // The awards URLs win even over a saved team session — they're
+    // standalone pages; the header logo leads back to the main app.
+    if (isAwards2026Url()) return 'awards2026';
+    if (isGalleryUrl()) return 'gallery';
     if (isResultsUrl()) return 'results';
     if (localStorage.getItem('pubhunt_team_session')) return 'team-portal';
     // A scanned QR shows logged-out visitors a standalone public hint page.
@@ -143,9 +178,9 @@ export default function App() {
   useEffect(() => registerCutoffPopup(() => setCutoffPopupOpen(true)), []);
 
   useEffect(() => {
-    // Not on the awards page: a "submissions closed" popup over the
+    // Not on an awards page: a "submissions closed" popup over the
     // results ceremony is just noise for anyone opening that link fresh.
-    if (isResultsUrl()) return;
+    if (isResultsUrl() || isAwards2026Url() || isGalleryUrl()) return;
     const showOnce = () => {
       if (localStorage.getItem('pubhunt_cutoff_seen')) return;
       localStorage.setItem('pubhunt_cutoff_seen', '1');
@@ -218,6 +253,21 @@ export default function App() {
     setQuizNumber(null);
   };
 
+  // Open the standalone 2026 awards page from within the app. Setting the
+  // hash keeps a refresh (and a shared link) on the awards page; the page's
+  // own back buttons call clearAwards2026Url() to undo it.
+  const openAwards2026 = () => {
+    sfx.playClick();
+    window.location.hash = 'awards2026';
+    setView('awards2026');
+  };
+
+  const openGallery = () => {
+    sfx.playClick();
+    window.location.hash = 'gallery';
+    setView('gallery');
+  };
+
   const handleAdminLogin = () => {
     setAdminAuthed(true);
     setView('admin-dashboard');
@@ -230,6 +280,30 @@ export default function App() {
 
   if (view === 'admin-dashboard' && adminAuthed) {
     return <AdminDashboard onLogout={handleAdminLogout} />;
+  }
+
+  if (view === 'awards2026') {
+    return (
+      <Awards2026
+        onExit={() => {
+          clearAwards2026Url();
+          setView('landing');
+        }}
+        onOpenGallery={openGallery}
+      />
+    );
+  }
+
+  if (view === 'gallery') {
+    return (
+      <Gallery
+        onExit={() => {
+          clearGalleryUrl();
+          setView('landing');
+        }}
+        onBackToAwards={openAwards2026}
+      />
+    );
   }
 
   const showBottomNav = view === 'team-portal' && !!teamSession;
@@ -318,7 +392,13 @@ export default function App() {
                 <Users size={18} /> Team Portal
               </button>
 
-              <InstructionsPanel alwaysOpen />
+              <button
+                id="go-awards-btn"
+                className="btn btn-block btn-lg awards-cta"
+                onClick={openAwards2026}
+              >
+                <Trophy size={20} /> Awards 2026
+              </button>
 
               <a
                 className="btn btn-secondary btn-block btn-lg"
