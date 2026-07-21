@@ -1,9 +1,15 @@
 import { useEffect, useRef } from 'react';
 
-// A decorative background for the Brain Training screen: a handful of the
-// professor heads drift around behind the UI boxes, bouncing off the screen
-// edges and off each other like a lazy physics toy. Purely cosmetic and
-// pointer-transparent, so it never interferes with answering questions.
+// A decorative background for the Awards page: low-poly character heads drift
+// around the screen, bouncing off the viewport edges and off each other with
+// simple elastic collisions — a playful "gaming" backdrop behind the content.
+//
+// The layer lives inside .aw-root (so it paints above the page background but
+// behind the content panels) yet tracks the viewport: each frame it is shifted
+// by the current scroll offset and sized to the window, so the heads always
+// bounce within the visible screen no matter how far the page is scrolled.
+// (A plain position:fixed can't be used here because .aw-root keeps a transform
+// after its entrance animation, which would trap "fixed" inside it.)
 
 interface Sprite {
   x: number; // top-left within the arena, px
@@ -14,21 +20,18 @@ interface Sprite {
   el: HTMLImageElement | null;
 }
 
-// How many heads float at once, capped by how many face images exist.
-const MAX_FLOATERS = 10;
-
-export default function BrainTrainingFaces({ faces }: { faces: string[] }) {
+export default function Awards2026Heads({ faces, count = 14 }: { faces: string[]; count?: number }) {
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const spritesRef = useRef<Sprite[]>([]);
   const rafRef = useRef(0);
 
-  // Pick the faces once (shuffled) so the set stays stable across renders.
+  // Pick the heads once so the set stays stable across renders. Repeat the
+  // face list if we want more heads than there are distinct images.
   const pickRef = useRef<string[]>([]);
   if (pickRef.current.length === 0 && faces.length > 0) {
-    pickRef.current = [...faces]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, Math.min(MAX_FLOATERS, faces.length));
-    spritesRef.current = pickRef.current.map(() => ({ x: 0, y: 0, vx: 0, vy: 0, r: 30, el: null }));
+    const shuffled = [...faces].sort(() => Math.random() - 0.5);
+    pickRef.current = Array.from({ length: count }, (_, i) => shuffled[i % shuffled.length]);
+    spritesRef.current = pickRef.current.map(() => ({ x: 0, y: 0, vx: 0, vy: 0, r: 40, el: null }));
   }
 
   useEffect(() => {
@@ -40,7 +43,11 @@ export default function BrainTrainingFaces({ faces }: { faces: string[] }) {
     const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
     let W = arena.clientWidth;
-    let H = arena.clientHeight;
+    let H = window.innerHeight;
+    arena.style.height = `${H}px`;
+
+    // Heads scale down a touch on small screens so they don't dominate.
+    const scale = W < 640 ? 0.62 : 1;
 
     // Scatter the heads over a jittered grid so they start spread across the
     // whole screen (pure random tends to clump them into one corner), each
@@ -51,13 +58,13 @@ export default function BrainTrainingFaces({ faces }: { faces: string[] }) {
     const cellW = W / cols;
     const cellH = H / rows;
     sprites.forEach((s, i) => {
-      s.r = rand(24, 36);
+      s.r = rand(30, 52) * scale;
       const size = s.r * 2;
       const cx = (i % cols) * cellW + cellW * rand(0.25, 0.75);
       const cy = Math.floor(i / cols) * cellH + cellH * rand(0.25, 0.75);
       s.x = Math.min(Math.max(0, cx - s.r), Math.max(0, W - size));
       s.y = Math.min(Math.max(0, cy - s.r), Math.max(0, H - size));
-      const speed = reduce ? 0 : rand(26, 62);
+      const speed = reduce ? 0 : rand(34, 74);
       const ang = rand(0, Math.PI * 2);
       s.vx = Math.cos(ang) * speed;
       s.vy = Math.sin(ang) * speed;
@@ -68,14 +75,21 @@ export default function BrainTrainingFaces({ faces }: { faces: string[] }) {
       }
     });
 
-    // Respect reduced-motion: leave the heads scattered but still.
-    if (reduce) return;
+    // Respect reduced-motion: leave the heads scattered but still (still keep
+    // the layer aligned to the viewport in case the page is scrolled).
+    if (reduce) {
+      arena.style.transform = `translateY(${window.scrollY}px)`;
+      return;
+    }
 
     let last = performance.now();
     const step = (now: number) => {
       // Clamp dt so a backgrounded tab doesn't teleport everything on return.
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+
+      // Keep the arena pinned to the current viewport as the page scrolls.
+      arena.style.transform = `translateY(${window.scrollY}px)`;
 
       // Move + bounce off the four walls.
       for (const s of sprites) {
@@ -123,28 +137,27 @@ export default function BrainTrainingFaces({ faces }: { faces: string[] }) {
     };
     rafRef.current = requestAnimationFrame(step);
 
-    // The panel can grow or shrink as questions/errors change height, so keep
-    // the collision bounds in sync with the arena and pull any stray heads back
-    // inside the new box.
-    const observer = new ResizeObserver(() => {
+    // Keep the arena's width/height and the heads in sync with the viewport.
+    const onResize = () => {
       W = arena.clientWidth;
-      H = arena.clientHeight;
+      H = window.innerHeight;
+      arena.style.height = `${H}px`;
       for (const s of sprites) {
         const size = s.r * 2;
         s.x = Math.min(Math.max(0, s.x), Math.max(0, W - size));
         s.y = Math.min(Math.max(0, s.y), Math.max(0, H - size));
       }
-    });
-    observer.observe(arena);
+    };
+    window.addEventListener('resize', onResize);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
-      observer.disconnect();
+      window.removeEventListener('resize', onResize);
     };
-  }, [faces]);
+  }, [faces, count]);
 
   return (
-    <div className="bt-faces" ref={arenaRef} aria-hidden="true">
+    <div className="aw-heads" ref={arenaRef} aria-hidden="true">
       {pickRef.current.map((src, i) => (
         <img
           key={i}
