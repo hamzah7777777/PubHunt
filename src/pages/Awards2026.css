@@ -123,6 +123,13 @@
   color: var(--color-dark);
   border-color: var(--border-default);
   text-decoration: none;
+  /* Override .btn's nowrap so the long label wraps instead of overflowing
+     the hero card on narrow phones. */
+  max-width: 100%;
+  white-space: normal;
+  flex-wrap: wrap;
+  line-height: 1.3;
+  text-align: center;
 }
 .aw-gallery-cta:hover,
 .aw-gallery-cta:active { background: #5CFF95; }
