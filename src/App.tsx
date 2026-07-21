@@ -13,7 +13,6 @@ import RouteMenu from './pages/RouteMenu';
 import QuizPage from './pages/QuizPage';
 import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
-import Results from './pages/Results';
 import Awards2026 from './pages/Awards2026';
 import Gallery from './pages/Gallery';
 import HintMario from './pages/pub hints/HintMario';
@@ -26,7 +25,7 @@ import { QUIZ_COUNT } from './pages/quiz';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'results' | 'awards2026' | 'gallery';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'awards2026' | 'gallery';
 
 // Themed shells by position: pubs 1-4, then the finish line. Both routes
 // share the shells; the riddle text comes from ROUTE_HINTS.
@@ -45,19 +44,24 @@ function consumeHintDeepLink(): { route: 'A' | 'B'; index: number } | null {
 
 const deepLink = consumeHintDeepLink();
 
-// Hidden awards page: nothing on the site links to /results yet. The Vite
-// dev server serves the app at the /results path directly; on GitHub Pages
-// the 404.html shim rewrites /results to /#results, so accept either form.
+// Legacy /results link: kept as an alias that now opens the 2026 awards
+// showcase (see isAwards2026Url below). The Vite dev server serves the app
+// at the /results path directly; on GitHub Pages the 404.html shim rewrites
+// /results to /#results, so accept either form.
 function isResultsUrl(): boolean {
   return /^#results$/i.test(window.location.hash) || /\/results\/?$/i.test(window.location.pathname);
 }
 
-// Leaving the awards page (via the header logo) should also drop the
-// /results marker from the URL so a refresh lands back on the main app.
+// Leaving the awards page (via the header logo or a back button) should also
+// drop the /results marker from the URL so a refresh lands back on the main
+// app. Clear both the path and the hash form, like clearAwards2026Url.
 function clearResultsUrl() {
   if (!isResultsUrl()) return;
   const path = window.location.pathname.replace(/results\/?$/i, '');
   history.replaceState(null, '', path + window.location.search);
+  if (/^#results$/i.test(window.location.hash)) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
 }
 
 // The 2026 photo awards showcase: another standalone page reachable only by
@@ -111,9 +115,9 @@ export default function App() {
   const [view, setView] = useState<View>(() => {
     // The awards URLs win even over a saved team session — they're
     // standalone pages; the header logo leads back to the main app.
-    if (isAwards2026Url()) return 'awards2026';
+    // /results is a legacy alias that now opens the awards showcase too.
+    if (isAwards2026Url() || isResultsUrl()) return 'awards2026';
     if (isGalleryUrl()) return 'gallery';
-    if (isResultsUrl()) return 'results';
     if (localStorage.getItem('pubhunt_team_session')) return 'team-portal';
     // A scanned QR shows logged-out visitors a standalone public hint page.
     return deepLink !== null && deepLink.index > 0 ? 'public-hint' : 'landing';
@@ -287,6 +291,7 @@ export default function App() {
       <Awards2026
         onExit={() => {
           clearAwards2026Url();
+          clearResultsUrl();
           setView('landing');
         }}
         onOpenGallery={openGallery}
@@ -492,8 +497,6 @@ export default function App() {
           {view === 'admin-login' && (
             <AdminLogin onLogin={handleAdminLogin} onBack={() => setView('landing')} />
           )}
-
-          {view === 'results' && <Results />}
         </div>
       </main>
     </div>
