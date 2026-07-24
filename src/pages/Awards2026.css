@@ -135,6 +135,47 @@
 .aw-gallery-cta:active { background: #5CFF95; }
 .aw-hero .aw-gallery-cta { margin-top: 20px; }
 
+/* Row of hero CTAs (leaderboard + gallery), side by side on desktop and
+   stacked on narrow phones. Overrides the standalone gallery-cta margin. */
+.aw-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.aw-hero-ctas .aw-gallery-cta { margin-top: 0; }
+
+/* Gold sibling of the green gallery CTA — leads to the full leaderboard. */
+.aw-leaderboard-cta {
+  background: var(--aw-gold);
+  color: var(--color-dark);
+  border-color: var(--border-default);
+  text-decoration: none;
+  max-width: 100%;
+  white-space: normal;
+  flex-wrap: wrap;
+  line-height: 1.3;
+  text-align: center;
+}
+.aw-leaderboard-cta:hover,
+.aw-leaderboard-cta:active { background: #FFD65C; }
+
+/* Cyan sibling — leads to the answer key. */
+.aw-answerkey-cta {
+  background: var(--secondary-brand);
+  color: var(--color-dark);
+  border-color: var(--border-default);
+  text-decoration: none;
+  max-width: 100%;
+  white-space: normal;
+  flex-wrap: wrap;
+  line-height: 1.3;
+  text-align: center;
+}
+.aw-answerkey-cta:hover,
+.aw-answerkey-cta:active { background: #5CF0FF; }
+
 .aw-thanks-actions {
   display: flex;
   flex-wrap: wrap;
@@ -605,36 +646,8 @@
 .aw-ff-value small { display: block; font-size: 8px; color: var(--color-body-subtle); margin-top: 4px; }
 
 /* ----------------------------------------------------------
-   FLOATING HEADS — decorative low-poly heads that drift and
-   bounce around the screen behind the content (never over
-   text). Positions are driven by JS (Awards2026Heads); the
-   layer is pinned to the top of .aw-root and shifted to follow
-   the scroll so the heads stay within the visible viewport.
+   FLOATING HEADS — the drifting low-poly heads background is the
+   shared FloatingHeads component (.fheads, z-index 0); the page
+   content just needs to sit above it.
    ---------------------------------------------------------- */
-.aw-heads {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  will-change: transform;
-}
-/* Content sits above the heads layer. */
 .aw-header, .aw-container { position: relative; z-index: 1; }
-
-.aw-heads img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  object-fit: contain;
-  opacity: 0.9;
-  image-rendering: auto;
-  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45));
-  will-change: transform;
-}
-
-@media (max-width: 680px) {
-  .aw-heads img { opacity: 0.75; }
-}

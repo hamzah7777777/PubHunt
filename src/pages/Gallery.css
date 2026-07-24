@@ -19,6 +19,9 @@
      make this element the containing block for the position:fixed lightbox,
      sizing the overlay to the whole page instead of the viewport. */
   animation: galRootIn 0.2s steps(4) forwards;
+  /* Positioning context for the FloatingHeads layer. position:relative (unlike
+     transform) does NOT make this the containing block for the fixed lightbox. */
+  position: relative;
 }
 @keyframes galRootIn {
   from { opacity: 0; }
@@ -33,6 +36,8 @@
   padding: 14px 20px;
   background: var(--brand);
   border-bottom: 3px solid var(--border-default);
+  position: relative;
+  z-index: 1;
 }
 .gal-header-logo {
   display: flex;
@@ -55,7 +60,10 @@
   max-width: 1320px;
   margin: 0 auto;
   padding: 20px 14px 56px;
+  position: relative;
+  z-index: 1;
 }
+.gal-container .snav { margin-top: 28px; }
 @media (min-width: 768px) {
   .gal-container { padding: 28px 24px 72px; }
 }

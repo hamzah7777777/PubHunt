@@ -1,0 +1,29 @@
+/* Drifting character-heads background layer (see FloatingHeads.tsx). Pinned to
+   the top of the page root and shifted by JS to follow the scroll so the heads
+   stay within the visible viewport, behind the content (z-index 0). */
+
+.fheads {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fheads img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  object-fit: contain;
+  opacity: 0.9;
+  image-rendering: auto;
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.45));
+  will-change: transform;
+}
+
+@media (max-width: 680px) {
+  .fheads img { opacity: 0.75; }
+}

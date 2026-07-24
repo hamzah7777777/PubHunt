@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Camera, ChevronLeft, ChevronRight, Gamepad2, Shuffle, Sparkles, X } from 'lucide-react';
+import FloatingHeads from '../components/FloatingHeads';
+import ShowcaseNav from '../components/ShowcaseNav';
 import './Gallery.css';
 
 // Standalone photo gallery for the 2026 Pub Hunt after-party at The Four Leaf,
@@ -30,9 +32,11 @@ function shuffled<T>(arr: T[]): T[] {
 interface Props {
   onExit: () => void;
   onBackToAwards: () => void;
+  onOpenLeaderboard: () => void;
+  onOpenAnswers: () => void;
 }
 
-export default function Gallery({ onExit, onBackToAwards }: Props) {
+export default function Gallery({ onExit, onBackToAwards, onOpenLeaderboard, onOpenAnswers }: Props) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [order, setOrder] = useState<Photo[]>([]);
   // Position within `order` of the open lightbox photo, or null when closed.
@@ -87,6 +91,7 @@ export default function Gallery({ onExit, onBackToAwards }: Props) {
 
   return (
     <div className="gal-root">
+      <FloatingHeads />
       <header className="gal-header">
         <button className="gal-header-logo" onClick={onExit} aria-label="Back to Pub Hunt">
           <Gamepad2 size={22} />
@@ -143,6 +148,15 @@ export default function Gallery({ onExit, onBackToAwards }: Props) {
             ))}
           </div>
         )}
+
+        {/* Cross-navigation to the other public showcase pages. */}
+        <ShowcaseNav
+          current="gallery"
+          onMainSite={onExit}
+          onAwards={onBackToAwards}
+          onLeaderboard={onOpenLeaderboard}
+          onAnswers={onOpenAnswers}
+        />
       </div>
 
       {current && (

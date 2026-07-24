@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Beer, LifeBuoy, Shield, Trophy, Users, Volume2, VolumeX } from 'lucide-react';
+import { Beer, KeyRound, LifeBuoy, ListOrdered, Shield, Trophy, Users, Volume2, VolumeX } from 'lucide-react';
 import { sfx } from './lib/sfx';
 import { supabase } from './lib/supabase';
 import TeamLogin from './pages/TeamLogin';
@@ -15,6 +15,8 @@ import ChallengesPage, { type ChallengeSubpage } from './pages/ChallengesPage';
 import StartHsbc from './pages/pub hints/StartHsbc';
 import Awards2026 from './pages/Awards2026';
 import Gallery from './pages/Gallery';
+import IntoTheWeeds from './pages/IntoTheWeeds';
+import SpeakingTheTruth from './pages/SpeakingTheTruth';
 import HintMario from './pages/pub hints/HintMario';
 import HintPokemon from './pages/pub hints/HintPokemon';
 import HintAmongUs from './pages/pub hints/HintAmongUs';
@@ -25,7 +27,7 @@ import { QUIZ_COUNT } from './pages/quiz';
 import type { TeamSession } from './types';
 import './App.css';
 
-type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'awards2026' | 'gallery';
+type View = 'landing' | 'team-login' | 'team-portal' | 'admin-login' | 'admin-dashboard' | 'public-hint' | 'awards2026' | 'gallery' | 'into-the-weeds' | 'speaking-the-truth';
 
 // Themed shells by position: pubs 1-4, then the finish line. Both routes
 // share the shells; the riddle text comes from ROUTE_HINTS.
@@ -96,6 +98,38 @@ function clearGalleryUrl() {
   }
 }
 
+// The full final leaderboard: a standalone showcase at /into-the-weeds (or
+// /#into-the-weeds), linked from the awards page. Same dev-serve / 404-shim
+// handling as the pages above.
+function isIntoTheWeedsUrl(): boolean {
+  return /^#into-the-weeds$/i.test(window.location.hash) || /\/into-the-weeds\/?$/i.test(window.location.pathname);
+}
+
+function clearIntoTheWeedsUrl() {
+  if (!isIntoTheWeedsUrl()) return;
+  const path = window.location.pathname.replace(/into-the-weeds\/?$/i, '');
+  history.replaceState(null, '', path + window.location.search);
+  if (/^#into-the-weeds$/i.test(window.location.hash)) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+// The public answer key: every quiz/challenge question with its correct
+// answer, at /speaking-the-truth (or /#speaking-the-truth), linked from the
+// awards page. Same dev-serve / 404-shim handling as the pages above.
+function isSpeakingTheTruthUrl(): boolean {
+  return /^#speaking-the-truth$/i.test(window.location.hash) || /\/speaking-the-truth\/?$/i.test(window.location.pathname);
+}
+
+function clearSpeakingTheTruthUrl() {
+  if (!isSpeakingTheTruthUrl()) return;
+  const path = window.location.pathname.replace(/speaking-the-truth\/?$/i, '');
+  history.replaceState(null, '', path + window.location.search);
+  if (/^#speaking-the-truth$/i.test(window.location.hash)) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
 export default function App() {
   const [teamSession, setTeamSession] = useState<TeamSession | null>(() => {
     const saved = localStorage.getItem('pubhunt_team_session');
@@ -118,6 +152,8 @@ export default function App() {
     // /results is a legacy alias that now opens the awards showcase too.
     if (isAwards2026Url() || isResultsUrl()) return 'awards2026';
     if (isGalleryUrl()) return 'gallery';
+    if (isIntoTheWeedsUrl()) return 'into-the-weeds';
+    if (isSpeakingTheTruthUrl()) return 'speaking-the-truth';
     if (localStorage.getItem('pubhunt_team_session')) return 'team-portal';
     // A scanned QR shows logged-out visitors a standalone public hint page.
     return deepLink !== null && deepLink.index > 0 ? 'public-hint' : 'landing';
@@ -184,7 +220,7 @@ export default function App() {
   useEffect(() => {
     // Not on an awards page: a "submissions closed" popup over the
     // results ceremony is just noise for anyone opening that link fresh.
-    if (isResultsUrl() || isAwards2026Url() || isGalleryUrl()) return;
+    if (isResultsUrl() || isAwards2026Url() || isGalleryUrl() || isIntoTheWeedsUrl() || isSpeakingTheTruthUrl()) return;
     const showOnce = () => {
       if (localStorage.getItem('pubhunt_cutoff_seen')) return;
       localStorage.setItem('pubhunt_cutoff_seen', '1');
@@ -272,6 +308,18 @@ export default function App() {
     setView('gallery');
   };
 
+  const openLeaderboard = () => {
+    sfx.playClick();
+    window.location.hash = 'into-the-weeds';
+    setView('into-the-weeds');
+  };
+
+  const openAnswerKey = () => {
+    sfx.playClick();
+    window.location.hash = 'speaking-the-truth';
+    setView('speaking-the-truth');
+  };
+
   const handleAdminLogin = () => {
     setAdminAuthed(true);
     setView('admin-dashboard');
@@ -295,6 +343,8 @@ export default function App() {
           setView('landing');
         }}
         onOpenGallery={openGallery}
+        onOpenLeaderboard={openLeaderboard}
+        onOpenAnswerKey={openAnswerKey}
       />
     );
   }
@@ -307,6 +357,36 @@ export default function App() {
           setView('landing');
         }}
         onBackToAwards={openAwards2026}
+        onOpenLeaderboard={openLeaderboard}
+        onOpenAnswers={openAnswerKey}
+      />
+    );
+  }
+
+  if (view === 'into-the-weeds') {
+    return (
+      <IntoTheWeeds
+        onExit={() => {
+          clearIntoTheWeedsUrl();
+          setView('landing');
+        }}
+        onBackToAwards={openAwards2026}
+        onOpenAnswers={openAnswerKey}
+        onOpenGallery={openGallery}
+      />
+    );
+  }
+
+  if (view === 'speaking-the-truth') {
+    return (
+      <SpeakingTheTruth
+        onExit={() => {
+          clearSpeakingTheTruthUrl();
+          setView('landing');
+        }}
+        onBackToAwards={openAwards2026}
+        onOpenLeaderboard={openLeaderboard}
+        onOpenGallery={openGallery}
       />
     );
   }
@@ -403,6 +483,22 @@ export default function App() {
                 onClick={openAwards2026}
               >
                 <Trophy size={20} /> Awards 2026
+              </button>
+
+              <button
+                id="go-leaderboard-btn"
+                className="btn btn-block btn-lg"
+                onClick={openLeaderboard}
+              >
+                <ListOrdered size={20} /> Full Leaderboard
+              </button>
+
+              <button
+                id="go-answer-key-btn"
+                className="btn btn-block btn-lg"
+                onClick={openAnswerKey}
+              >
+                <KeyRound size={20} /> Answer Key
               </button>
 
               <a

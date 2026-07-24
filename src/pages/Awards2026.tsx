@@ -10,7 +10,9 @@ import {
   Gamepad2,
   HeartHandshake,
   HelpCircle,
+  KeyRound,
   Lightbulb,
+  ListOrdered,
   MapPin,
   Medal,
   PartyPopper,
@@ -22,7 +24,8 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
-import Awards2026Heads from './Awards2026Heads';
+import FloatingHeads from '../components/FloatingHeads';
+import ShowcaseNav from '../components/ShowcaseNav';
 import './Awards2026.css';
 
 // Standalone awards showcase for the 2026 Pub Hunt, reachable at /Awards2026
@@ -270,11 +273,6 @@ const BEST_DETECTIVES: ClashRow[] = [
   { rank: '5', team: 'The Clever Ones', theme: 'Fortnite', value: 33 },
 ];
 
-// Low-poly character heads (public/braintrainer/) used for the drifting,
-// bouncing background behind the page — see Awards2026Heads.
-const FACE_COUNT = 17;
-const FACES = Array.from({ length: FACE_COUNT }, (_, i) => `/braintrainer/braintrainer${i + 1}.webp`);
-
 function ClashList({ title, Icon, unit, rows }: { title: string; Icon: typeof Trophy; unit: string; rows: ClashRow[] }) {
   const max = Math.max(...rows.map(r => r.value));
   return (
@@ -388,7 +386,17 @@ function WinnerCard({ winner, featured, catKey }: { winner: Winner; featured: bo
   );
 }
 
-export default function Awards2026({ onExit, onOpenGallery }: { onExit: () => void; onOpenGallery: () => void }) {
+export default function Awards2026({
+  onExit,
+  onOpenGallery,
+  onOpenLeaderboard,
+  onOpenAnswerKey,
+}: {
+  onExit: () => void;
+  onOpenGallery: () => void;
+  onOpenLeaderboard: () => void;
+  onOpenAnswerKey: () => void;
+}) {
   useEffect(() => {
     const prev = document.title;
     document.title = 'Pub Hunt 2026 — Awards';
@@ -401,7 +409,7 @@ export default function Awards2026({ onExit, onOpenGallery }: { onExit: () => vo
   return (
     <div className="aw-root">
       {/* Character heads drifting and bouncing around behind the content. */}
-      <Awards2026Heads faces={FACES} />
+      <FloatingHeads />
 
       <header className="aw-header">
         <button className="aw-header-logo" onClick={onExit} aria-label="Back to Pub Hunt">
@@ -430,9 +438,17 @@ export default function Awards2026({ onExit, onOpenGallery }: { onExit: () => vo
             <span className="aw-hero-tag"><Gamepad2 size={14} /> Video games theme</span>
             <span className="aw-hero-tag"><MapPin size={14} /> Sheffield city centre</span>
           </div>
-          <button className="btn btn-lg aw-gallery-cta" onClick={onOpenGallery}>
-            <Camera size={18} /> View the Photo Gallery
-          </button>
+          <div className="aw-hero-ctas">
+            <button className="btn btn-lg aw-leaderboard-cta" onClick={onOpenLeaderboard}>
+              <ListOrdered size={18} /> Full Leaderboard
+            </button>
+            <button className="btn btn-lg aw-answerkey-cta" onClick={onOpenAnswerKey}>
+              <KeyRound size={18} /> Answer Key
+            </button>
+            <button className="btn btn-lg aw-gallery-cta" onClick={onOpenGallery}>
+              <Camera size={18} /> View the Photo Gallery
+            </button>
+          </div>
         </section>
 
         {/* INTRO */}
@@ -564,15 +580,16 @@ export default function Awards2026({ onExit, onOpenGallery }: { onExit: () => vo
             Thank you to everyone who showed up, went all out on the costumes and had an absolute blast. You
             made the night what it was &mdash; here&rsquo;s to the next one!
           </p>
-          <div className="aw-thanks-actions">
-            <button className="btn aw-gallery-cta" onClick={onOpenGallery}>
-              <Camera size={16} /> Photo Gallery
-            </button>
-            <button className="btn btn-primary" onClick={onExit}>
-              Back to Pub Hunt
-            </button>
-          </div>
         </section>
+
+        {/* Cross-navigation to the other public showcase pages. */}
+        <ShowcaseNav
+          current="awards"
+          onMainSite={onExit}
+          onLeaderboard={onOpenLeaderboard}
+          onAnswers={onOpenAnswerKey}
+          onGallery={onOpenGallery}
+        />
       </div>
     </div>
   );

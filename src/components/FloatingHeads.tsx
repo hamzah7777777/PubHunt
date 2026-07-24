@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react';
+import { FLOATING_HEAD_FACES } from '../lib/faces';
+import './FloatingHeads.css';
 
-// A decorative background for the Awards page: low-poly character heads drift
-// around the screen, bouncing off the viewport edges and off each other with
-// simple elastic collisions — a playful "gaming" backdrop behind the content.
+// A decorative background shared by the public showcase pages: low-poly
+// character heads drift around the screen, bouncing off the viewport edges and
+// off each other with simple elastic collisions — a playful "gaming" backdrop
+// behind the content.
 //
-// The layer lives inside .aw-root (so it paints above the page background but
-// behind the content panels) yet tracks the viewport: each frame it is shifted
-// by the current scroll offset and sized to the window, so the heads always
-// bounce within the visible screen no matter how far the page is scrolled.
-// (A plain position:fixed can't be used here because .aw-root keeps a transform
-// after its entrance animation, which would trap "fixed" inside it.)
+// The layer lives inside the page root (so it paints above the page background
+// but behind the content) yet tracks the viewport: each frame it is shifted by
+// the current scroll offset and sized to the window, so the heads always bounce
+// within the visible screen no matter how far the page is scrolled. The page
+// root must be position:relative (the arena is absolutely positioned within
+// it) and its content must sit at z-index >= 1 (the arena is z-index 0).
 
 interface Sprite {
   x: number; // top-left within the arena, px
@@ -20,7 +23,7 @@ interface Sprite {
   el: HTMLImageElement | null;
 }
 
-export default function Awards2026Heads({ faces, count = 14 }: { faces: string[]; count?: number }) {
+export default function FloatingHeads({ faces = FLOATING_HEAD_FACES, count = 14 }: { faces?: string[]; count?: number }) {
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const spritesRef = useRef<Sprite[]>([]);
   const rafRef = useRef(0);
@@ -157,7 +160,7 @@ export default function Awards2026Heads({ faces, count = 14 }: { faces: string[]
   }, [faces, count]);
 
   return (
-    <div className="aw-heads" ref={arenaRef} aria-hidden="true">
+    <div className="fheads" ref={arenaRef} aria-hidden="true">
       {pickRef.current.map((src, i) => (
         <img
           key={i}
